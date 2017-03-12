@@ -1,7 +1,11 @@
-var User = require('../models/User');
-var jwt = require('jsonwebtoken');
-var app = require('../app.js');
-var express = require('express');
+let UserModels = require('../models/User');
+let User = UserModels.User;
+let Car = UserModels.Car;
+let Service = UserModels.Service;
+let jwt = require('jsonwebtoken');
+let app = require('../app.js');
+let express = require('express');
+let moment = require('moment');
 
 var APIRoutes = express.Router();
 var RestrictedAPIRoutes = express.Router();
@@ -12,7 +16,9 @@ APIRoutes.post('/register', (req, res) => {
   if (validateUserData(req)) {
     var newUser = new User({
       email: req.body.email,
-      password: req.body.password
+      password: req.body.password,
+      name: req.body.name || '',
+      telephone: req.body.telephone || '',
     });
 
     // Save the new User to DB
@@ -138,23 +144,105 @@ RestrictedAPIRoutes.get('/test', (req, res) => {
 RestrictedAPIRoutes.get('/user', (req, res) => {
   var userID = req.decodedToken._doc._id;
 
-  User
-    .findOne({
-      _id: userID
-    })
+  getUser(userID)
     .then((user) => {
       res.json(user);
-    })
-    .catch((error) => {
+    }, (error) => {
       handleDBError(error, res);
     });
 });
 
 // Get Cars
 RestrictedAPIRoutes.get('/user/cars', (req, res) => {
-
+  var userID = req.decodedToken._doc._id;
+  getUser(userID)
+    .then((user) => {
+      res.json(user.cars);
+    }, (error) => {
+      handleDBError(error, res);
+    });
 });
 
+// Add new Car
+RestrictedAPIRoutes.post('/user/cars/add', (req, res) => {
+  if (req.body.model) {
+    var userID = req.decodedToken._doc._id;
+    var newCar = new Car({
+      model: req.body.model,
+      year: req.body.year || ''
+    });
+    getUser(userID)
+      .then((user) => {
+        user.cars.push(newCar);
+        user.save().then((user) => {
+          res.json({
+            success: true,
+            message: 'Car added successfully'
+          });
+        });
+      }, (error) => {
+        handleDBError(error, res);
+      });
+  } else {
+    // Required data not present, return error
+    res.json({
+      success: false,
+      error: 'Required data not provided.'
+    });
+  }
+});
+
+// Get Car's Service entries
+RestrictedAPIRoutes.get('/user/cars/:id/service', (req, res) => {
+  var userID = req.decodedToken._doc._id;
+
+  getUser(userID)
+    .then((user) => {
+      var car = user._doc.cars.id(req.params.id);
+      res.json(car.serviceBook);
+    }, (error) => {
+      handleDBError(error, res);
+    });
+});
+
+// Add new Service entry
+RestrictedAPIRoutes.post('/user/cars/:id/service/add', (req, res) => {
+  var userID = req.decodedToken._doc._id;
+  // Verify provided data
+  if (req.body.date && req.body.cost && req.body.description) {
+    var newService = new Service({
+      date: moment().format(req.body.date),
+      cost: req.body.cost,
+      description: req.body.description
+    });
+    getUser(userID)
+      .then((user) => {
+        var car = user._doc.cars.id(req.params.id);
+        car.serviceBook.push(newService);
+        // Need to save embedded doc first, then parent doc !
+        car.save().then((car) => {
+          user.save().then((user) => {
+            res.json({
+              success: true,
+              message: 'Service added successfully'
+            });
+          }, (error) => {
+            handleDBError(error, res);
+          });
+        }, (error) => {
+          handleDBError(error, res);
+        });
+      }, (error) => {
+        handleDBError(error, res);
+      });
+  } else {
+    // Data not provided
+    res.json({
+      success: false,
+      error: 'Required data not provided.'
+    });
+  }
+});
 
 /**
  * Handles Database errors
@@ -167,6 +255,27 @@ function handleDBError(error, res) {
     success: false,
     error: error.code,
     message: 'Lookup the above error code for more information'
+  });
+}
+
+/**
+ * Gets User from DB by ID
+ *
+ * @param {Number} id
+ * @returns
+ */
+function getUser(id) {
+  return new Promise((resolve, reject) => {
+    User
+      .findOne({
+        _id: id
+      })
+      .then((user) => {
+        resolve(user);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 }
 

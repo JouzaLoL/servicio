@@ -8,7 +8,10 @@ const serviceSchema = new mongoose.Schema({
 });
 
 const carSchema = new mongoose.Schema({
-    model: String,
+    model: {
+        type: String,
+        required: true
+    },
     year: String,
     serviceBook: [serviceSchema]
 });
@@ -63,4 +66,8 @@ const Service = mongoose.model('Service', serviceSchema);
 const Car = mongoose.model('Car', carSchema);
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+module.exports = {
+    User,
+    Car,
+    Service
+};
