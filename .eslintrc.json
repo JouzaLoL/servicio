@@ -1,3 +1,14 @@
 {
-    "extends": "google"
+    "extends": "google",
+    "parserOptions": {
+        "ecmaVersion": 6
+    },
+    "rules": {
+        "space-before-function-paren": "off",
+        "eol-last": "off",
+        "no-var": "off",
+        "comma-dangle": "off",
+        "new-cap": "off",
+        "max-len": "off"
+    }
 }
