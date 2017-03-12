@@ -9,7 +9,7 @@ let moment = require('moment');
 
 var APIRoutes = express.Router();
 var RestrictedAPIRoutes = express.Router();
-
+// Testing new git email
 // Register a new user
 APIRoutes.post('/register', (req, res) => {
   // Validate that all required data is present
@@ -277,7 +277,7 @@ function handleDBError(error, res) {
 
 /**
  * Gets User from DB by ID
- *
+ * 
  * @param {any} id
  * @returns
  */
