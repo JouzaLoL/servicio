@@ -9,6 +9,7 @@
         "no-var": "off",
         "comma-dangle": "off",
         "new-cap": "off",
-        "max-len": "off"
+        "max-len": "off",
+        "valid-jsdoc": "off"
     }
 }

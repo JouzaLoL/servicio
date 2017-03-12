@@ -278,7 +278,7 @@ function handleDBError(error, res) {
 /**
  * Gets User from DB by ID
  *
- * @param {Number} id
+ * @param {any} id
  * @returns
  */
 function getUser(id) {
