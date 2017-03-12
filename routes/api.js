@@ -192,6 +192,23 @@ RestrictedAPIRoutes.post('/user/cars/add', (req, res) => {
   }
 });
 
+// Remove Car
+RestrictedAPIRoutes.delete('/user/cars/:id/remove', (req, res) => {
+  var userID = req.decodedToken._doc._id;
+  getUser(userID)
+    .then((user) => {
+      user._doc.cars.id(req.params.id).remove();
+      user.save().then((user) => {
+        res.json({
+          success: true,
+          message: 'Car removed successfully'
+        });
+      });
+    }, (error) => {
+      handleDBError(error, res);
+    });
+});
+
 // Get Car's Service entries
 RestrictedAPIRoutes.get('/user/cars/:id/service', (req, res) => {
   var userID = req.decodedToken._doc._id;
