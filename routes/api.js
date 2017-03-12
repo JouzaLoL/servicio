@@ -29,11 +29,7 @@ APIRoutes.post('/register', (req, res) => {
         });
       })
       .catch((error) => {
-        res.json({
-          success: false,
-          error: error.code,
-          message: 'Lookup the above error code for more information'
-        });
+        handleDBError(error, res);
       });
   } else {
     // Required data not present, return error
@@ -82,7 +78,7 @@ APIRoutes.post('/authenticate', function (req, res) {
             // Passsword OK
             // Create a token
             let token = jwt.sign(user, app.get('superSecret'), {
-              expiresIn: 1440 // 1440 minutes = 24 hours
+              expiresIn: '24h'
             });
 
             // return the information including token as JSON
@@ -130,12 +126,49 @@ RestrictedAPIRoutes.use(function (req, res, next) {
   }
 });
 
-RestrictedAPIRoutes.get('/', (req, res) => {
+// Test restricted route
+RestrictedAPIRoutes.get('/test', (req, res) => {
   res.json({
     user: req.decodedToken._doc.email,
-    message: 'welcome'
+    message: 'Test successful.'
   });
 });
+
+// Get User Document
+RestrictedAPIRoutes.get('/user', (req, res) => {
+  var userID = req.decodedToken._doc._id;
+
+  User
+    .findOne({
+      _id: userID
+    })
+    .then((user) => {
+      res.json(user);
+    })
+    .catch((error) => {
+      handleDBError(error, res);
+    });
+});
+
+// Get Cars
+RestrictedAPIRoutes.get('/user/cars', (req, res) => {
+
+});
+
+
+/**
+ * Handles Database errors
+ *
+ * @param {any} error
+ * @param {any} res
+ */
+function handleDBError(error, res) {
+  res.json({
+    success: false,
+    error: error.code,
+    message: 'Lookup the above error code for more information'
+  });
+}
 
 // Export all routes
 module.exports = {
