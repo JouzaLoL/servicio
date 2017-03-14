@@ -3,6 +3,9 @@ let logger = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
 
+// Custom error handler
+let errorHandler = require('./errors/error-handler.js');
+
 var app = express();
 module.exports = app;
 
@@ -22,12 +25,17 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 
+
+
 // Route vars
 var apiRoutes = require('./routes/api');
 
 // Routes
 app.use('/api', apiRoutes.APIRoutes);
 app.use('/api', apiRoutes.RestrictedAPIRoutes);
+
+// Custom error handler
+app.use(errorHandler);
 
 // Start server
 app.listen(3000, () => {

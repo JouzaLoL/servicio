@@ -2,63 +2,40 @@ let UserModels = require('../models/User');
 let User = UserModels.User;
 let Car = UserModels.Car;
 let Service = UserModels.Service;
+
 let jwt = require('jsonwebtoken');
 let app = require('../app.js');
 let express = require('express');
 let moment = require('moment');
 
+let validate = require('express-validation');
+let validation = require('../validation/validation');
+
 var APIRoutes = express.Router();
 var RestrictedAPIRoutes = express.Router();
 
 // Register a new user
-APIRoutes.post('/register', (req, res) => {
-  // Validate that all required data is present
-  if (validateUserData(req)) {
-    var newUser = new User({
-      email: req.body.email,
-      password: req.body.password,
-      name: req.body.name || '',
-      telephone: req.body.telephone || '',
-    });
-
-    // Save the new User to DB
-    newUser
-      .save()
-      .then((err) => {
-        // New user saved successfully
-        res.json({
-          success: true,
-          message: 'Registered successfully. Authenticate to get API key.',
-          user: {
-            mail: newUser._doc.email
-          }
-        });
-      })
-      .catch((error) => {
-        handleDBError(error, res);
+APIRoutes.post('/register', validate(validation.register), (req, res) => {
+  // Save the new User to DB
+  newUser
+    .save()
+    .then((err) => {
+      // New user saved successfully
+      res.json({
+        success: true,
+        message: 'Registered successfully. Authenticate to get API key.',
+        user: {
+          mail: newUser._doc.email
+        }
       });
-  } else {
-    // Required data not present, return error
-    res.json({
-      success: false,
-      error: 'Required data not provided.'
+    })
+    .catch((error) => {
+      handleDBError(error, res);
     });
-  }
 });
 
-
-/**
- * Validates user data
- *
- * @param {any} req
- * @returns
- */
-function validateUserData(req) {
-  return (req.body.email && req.body.password);
-}
-
 // Authenticate a user
-APIRoutes.post('/authenticate', function (req, res) {
+APIRoutes.post('/authenticate', validate(validation.authenticate), function (req, res, next) {
   // Retrieve user from DB
   User
     .findOne({
@@ -67,10 +44,7 @@ APIRoutes.post('/authenticate', function (req, res) {
     .then((user) => {
       // No user found
       if (!user) {
-        res.json({
-          success: false,
-          message: 'Authentication failed. User not found.'
-        });
+        next();
       } else if (user) {
         // User found
         // Verify password
@@ -127,12 +101,12 @@ RestrictedAPIRoutes.use(function (req, res, next) {
     return res.status(403).json({
       success: false,
       error: 'No token provided.',
-      message: 'Some API endpoints require a valid token to be included in the request. Authenticate to get one.'
+      message: 'Restricted API endpoints require a valid token to be included in the request. Authenticate to get one.'
     });
   }
 });
 
-// Test restricted route
+// Restricted route test
 RestrictedAPIRoutes.get('/test', (req, res) => {
   res.json({
     user: req.decodedToken._doc.email,
@@ -147,8 +121,9 @@ RestrictedAPIRoutes.get('/user', (req, res) => {
   getUser(userID)
     .then((user) => {
       res.json(user);
-    }, (error) => {
-      handleDBError(error, res);
+    })
+    .catch((error) => {
+      next(error);
     });
 });
 
@@ -158,54 +133,56 @@ RestrictedAPIRoutes.get('/user/cars', (req, res) => {
   getUser(userID)
     .then((user) => {
       res.json(user.cars);
-    }, (error) => {
-      handleDBError(error, res);
+    })
+    .catch((error) => {
+      next(error);
     });
 });
 
 // Add new Car
-RestrictedAPIRoutes.post('/user/cars/add', (req, res) => {
-  if (req.body.model) {
-    var userID = req.decodedToken._doc._id;
-    var newCar = new Car({
-      model: req.body.model,
-      year: req.body.year || ''
-    });
-    getUser(userID)
-      .then((user) => {
-        user.cars.push(newCar);
-        user.save().then((user) => {
+RestrictedAPIRoutes.post('/user/cars/add', validate(validation.newCar), (req, res) => {
+  var userID = req.decodedToken._doc._id;
+  var newCar = new Car({
+    model: req.body.model,
+    year: req.body.year || ''
+  });
+  getUser(userID)
+    .then((user) => {
+      user.cars.push(newCar);
+      user.save().then((user) => {
           res.json({
             success: true,
             message: 'Car added successfully'
           });
+        })
+        .catch((error) => {
+          next(error);
         });
-      }, (error) => {
-        handleDBError(error, res);
-      });
-  } else {
-    // Required data not present, return error
-    res.json({
-      success: false,
-      error: 'Required data not provided.'
+    })
+    .catch((error) => {
+      next(error);
     });
-  }
 });
 
 // Remove Car
 RestrictedAPIRoutes.delete('/user/cars/:id/remove', (req, res) => {
   var userID = req.decodedToken._doc._id;
+
   getUser(userID)
     .then((user) => {
       user._doc.cars.id(req.params.id).remove();
+
       user.save().then((user) => {
-        res.json({
-          success: true,
-          message: 'Car removed successfully'
+          res.json({
+            success: true,
+            message: 'Car removed successfully'
+          });
+        })
+        .catch((error) => {
+          next(error);
         });
-      });
-    }, (error) => {
-      handleDBError(error, res);
+    }).catch((error) => {
+      next(error);
     });
 });
 
@@ -217,8 +194,9 @@ RestrictedAPIRoutes.get('/user/cars/:id/service', (req, res) => {
     .then((user) => {
       var car = user._doc.cars.id(req.params.id);
       res.json(car.serviceBook);
-    }, (error) => {
-      handleDBError(error, res);
+    })
+    .catch((error) => {
+      next(error);
     });
 });
 
