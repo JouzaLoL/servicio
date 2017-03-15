@@ -25,8 +25,6 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 
-
-
 // Route vars
 var apiRoutes = require('./routes/api');
 

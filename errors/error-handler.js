@@ -1,3 +1,4 @@
+let serializeError = require('serialize-error');
 /**
  * Handles errors
  *
@@ -8,7 +9,6 @@
  * @returns
  */
 function handleError(err, req, res, next) {
-
     switch (err.type) {
         case 'UserNotFound':
             return res.json({
@@ -25,7 +25,8 @@ function handleError(err, req, res, next) {
             });
             break;
         default:
-            return res.status(err.status || 500).json(err);
+        // TODO: If production, then only send error name and message
+            res.json(serializeError(err));
             break;
     }
 }

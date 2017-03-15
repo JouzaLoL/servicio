@@ -16,10 +16,17 @@ var RestrictedAPIRoutes = express.Router();
 
 // Register a new user
 APIRoutes.post('/register', validate(validation.register), (req, res) => {
+  var newUser = new User({
+    email: req.body.email,
+    password: req.body.password,
+    name: req.body.name,
+    telephone: req.body.telephone
+  });
+
   // Save the new User to DB
   newUser
     .save()
-    .then((err) => {
+    .then(() => {
       // New user saved successfully
       res.json({
         success: true,
@@ -30,7 +37,7 @@ APIRoutes.post('/register', validate(validation.register), (req, res) => {
       });
     })
     .catch((error) => {
-      handleDBError(error, res);
+      next(error);
     });
 });
 
@@ -44,24 +51,21 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
     .then((user) => {
       // No user found
       if (!user) {
-        next();
+        next(new Error('User not found in database'));
       } else if (user) {
         // User found
         // Verify password
         user.comparePassword(req.body.password, (error, isMatch) => {
           if (error) {
-            res.json({
-              success: false,
-              message: 'Authentication failed. Wrong password.'
-            });
-          } else {
+            next(new Error("Passwords don't match"));
+          } else if (isMatch) {
             // Passsword OK
             // Create a token
             let token = jwt.sign(user, app.get('superSecret'), {
               expiresIn: '24h'
             });
 
-            // return the information including token as JSON
+            // return the information including the token as JSON
             res.json({
               success: true,
               message: 'Token generated successfully',
@@ -72,7 +76,7 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
       }
     })
     .catch((error) => {
-      throw error;
+      next(error);
     });
 });
 
@@ -80,38 +84,23 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
 RestrictedAPIRoutes.use(function (req, res, next) {
   // Chheck header, url parameters or post parameters for token
   var token = req.body.token || req.query.token || req.headers['x-access-token'];
-  // Token provided
+
   if (token) {
     // Verify token and check expiration
     jwt
       .verify(token, app.get('superSecret'), (error, decodedToken) => {
         if (error) {
-          return res.json({
-            success: false,
-            error: error,
-            message: 'Failed to authenticate token.'
-          });
+          next(error);
         } else {
+          // Pass the decoded token to the rest of the request
           req.decodedToken = decodedToken;
           next();
         }
       });
   } else {
-    // No token provided
-    return res.status(403).json({
-      success: false,
-      error: 'No token provided.',
-      message: 'Restricted API endpoints require a valid token to be included in the request. Authenticate to get one.'
-    });
+    next(new Error('No token provided'));
   }
-});
 
-// Restricted route test
-RestrictedAPIRoutes.get('/test', (req, res) => {
-  res.json({
-    user: req.decodedToken._doc.email,
-    message: 'Test successful.'
-  });
 });
 
 // Get User Document
@@ -142,10 +131,12 @@ RestrictedAPIRoutes.get('/user/cars', (req, res) => {
 // Add new Car
 RestrictedAPIRoutes.post('/user/cars/add', validate(validation.newCar), (req, res) => {
   var userID = req.decodedToken._doc._id;
+
   var newCar = new Car({
     model: req.body.model,
-    year: req.body.year || ''
+    year: req.body.year
   });
+
   getUser(userID)
     .then((user) => {
       user.cars.push(newCar);
@@ -201,42 +192,42 @@ RestrictedAPIRoutes.get('/user/cars/:id/service', (req, res) => {
 });
 
 // Add new Service entry
-RestrictedAPIRoutes.post('/user/cars/:id/service/add', (req, res) => {
+RestrictedAPIRoutes.post('/user/cars/:id/service/add', validate(validation.newService), (req, res, next) => {
   var userID = req.decodedToken._doc._id;
-  // Verify provided data
-  if (req.body.date && req.body.cost && req.body.description) {
-    var newService = new Service({
-      date: moment().format(req.body.date),
-      cost: req.body.cost,
-      description: req.body.description
-    });
-    getUser(userID)
-      .then((user) => {
-        var car = user._doc.cars.id(req.params.id);
-        car.serviceBook.push(newService);
-        // Need to save embedded doc first, then parent doc !
-        car.save().then((car) => {
-          user.save().then((user) => {
-            res.json({
-              success: true,
-              message: 'Service added successfully'
+
+  var newService = new Service({
+    date: moment().format(req.body.date + ""),
+    cost: req.body.cost,
+    description: req.body.description
+  });
+
+  getUser(userID)
+    .then((user) => {
+      var car = user._doc.cars.id(req.params.id);
+      if (!car) {
+        return next(new Error('No Car with the specified ID'));
+      }
+      car.serviceBook.push(newService);
+      // Need to save embedded doc first, then parent doc !
+      car
+        .save()
+        .then((car) => {
+          user
+            .save()
+            .then((user) => {
+              res.json({
+                success: true,
+                message: 'Service added successfully'
+              });
+            }).catch((error) => {
+              next(error);
             });
-          }, (error) => {
-            handleDBError(error, res);
-          });
-        }, (error) => {
-          handleDBError(error, res);
+        }).catch((error) => {
+          next(error);
         });
-      }, (error) => {
-        handleDBError(error, res);
-      });
-  } else {
-    // Data not provided
-    res.json({
-      success: false,
-      error: 'Required data not provided.'
+    }).catch((error) => {
+      next(error);
     });
-  }
 });
 
 /**

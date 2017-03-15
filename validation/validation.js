@@ -17,8 +17,15 @@ module.exports = {
     },
     newCar: {
         body: {
-            model: Joi.string().required,
-            year: Joi.number().required
+            model: Joi.string().required(),
+            year: Joi.number().required()
+        }
+    },
+    newService: {
+        body: {
+            date: Joi.date().required(),
+            cost: Joi.number().required(),
+            description: Joi.string().min(5).max(300).required()
         }
     }
 };
