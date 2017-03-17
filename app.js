@@ -1,35 +1,53 @@
+'use strict';
+
+// Make require nicer
+global.__base = __dirname + '/';
+
 let express = require('express');
-let logger = require('morgan');
+let morgan = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
+
+// Custom error handler
+let errorHandler = require('./errors/error-handler.js');
+
+// Load config
+let config = require('config');
 
 var app = express();
 module.exports = app;
 
-var config = require('./config/config'); // get our config file
-
 // MongoDB setup
 mongoose.Promise = global.Promise;
-mongoose.connect(config.database);
+mongoose.connect(config.db);
 
 // Set secret for JWT
 app.set('superSecret', config.secret);
 
 // Middleware
-app.use(logger('dev'));
+if (config.util.getEnv('NODE_ENV') != 'test') {
+  // use morgan to log at command line
+  app.use(morgan('tiny'));
+}
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
 }));
 
 // Route vars
-var apiRoutes = require('./routes/api');
+let apiRoutes = require('./routes/api');
 
 // Routes
 app.use('/api', apiRoutes.APIRoutes);
 app.use('/api', apiRoutes.RestrictedAPIRoutes);
 
+// Custom error handler
+app.use(errorHandler);
+
 // Start server
 app.listen(3000, () => {
   console.log('! Server started');
 });
+
+// For tests
+module.exports = app;
