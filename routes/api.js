@@ -1,21 +1,25 @@
+// Models
 let UserModels = require('../models/User');
 let User = UserModels.User;
 let Car = UserModels.Car;
 let Service = UserModels.Service;
 
+// Modules
 let jwt = require('jsonwebtoken');
 let app = require('../app.js');
 let express = require('express');
 let moment = require('moment');
 
+// Validation
 let validate = require('express-validation');
 let validation = require('../validation/validation');
 
+// Init vars
 var APIRoutes = express.Router();
 var RestrictedAPIRoutes = express.Router();
 
 // Register a new user
-APIRoutes.post('/register', validate(validation.register), (req, res) => {
+APIRoutes.post('/register', validate(validation.register), (req, res, next) => {
   var newUser = new User({
     email: req.body.email,
     password: req.body.password,
@@ -56,7 +60,7 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
         // User found
         // Verify password
         user.comparePassword(req.body.password, (error, isMatch) => {
-          if (error) {
+          if (!isMatch) {
             next(new Error("Passwords don't match"));
           } else if (isMatch) {
             // Passsword OK
@@ -100,7 +104,6 @@ RestrictedAPIRoutes.use(function (req, res, next) {
   } else {
     next(new Error('No token provided'));
   }
-
 });
 
 // Get User Document
@@ -229,20 +232,6 @@ RestrictedAPIRoutes.post('/user/cars/:id/service/add', validate(validation.newSe
       next(error);
     });
 });
-
-/**
- * Handles Database errors
- *
- * @param {any} error
- * @param {any} res
- */
-function handleDBError(error, res) {
-  res.json({
-    success: false,
-    error: error.code,
-    message: 'Lookup the above error code for more information'
-  });
-}
 
 /**
  * Gets User from DB by ID

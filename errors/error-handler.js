@@ -25,8 +25,8 @@ function handleError(err, req, res, next) {
             });
             break;
         default:
-        // TODO: If production, then only send error name and message
-            res.json(serializeError(err));
+            // TODO: If production, then only send error name and message
+            res.status(err.status || 500).json(serializeError(err));
             break;
     }
 }
