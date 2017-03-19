@@ -28,9 +28,12 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-http": "^3.0.0",
+    "chai-json-schema": "^1.4.0",
     "chai-match-json": "^0.1.2",
     "eslint": "^3.17.1",
     "eslint-config-google": "^0.7.1",
-    "mocha": "^3.2.0"
+    "json-schema-to-mongoose": "^0.2.2",
+    "mocha": "^3.2.0",
+    "mongoose-schema-jsonschema": "^1.1.10"
   }
 }

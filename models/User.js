@@ -62,6 +62,7 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword,
     });
 };
 
+// ! mongoose.mode('Collection_name_in_singular', schema to use);
 const Service = mongoose.model('Service', serviceSchema);
 const Car = mongoose.model('Car', carSchema);
 const User = mongoose.model('User', userSchema);

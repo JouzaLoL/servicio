@@ -112,6 +112,7 @@ RestrictedAPIRoutes.get('/user', (req, res) => {
 
   getUser(userID)
     .then((user) => {
+      // TODO: Make a factory method for basic response that takes an object as argument that is included with the response
       res.json(user);
     })
     .catch((error) => {
