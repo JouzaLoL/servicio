@@ -1,22 +1,30 @@
+let app = require('../app.js');
+
 // Models
-let UserModels = require('../models/User');
+let UserModels = require(__base + 'models/User');
 let User = UserModels.User;
 let Car = UserModels.Car;
 let Service = UserModels.Service;
 
 // Modules
 let jwt = require('jsonwebtoken');
-let app = require('../app.js');
 let express = require('express');
 let moment = require('moment');
 
+// Route RouteHelper
+let RouteHelper = require(__base + 'routes/routeHelper.js');
+
 // Validation
 let validate = require('express-validation');
-let validation = require('../validation/validation');
+let validation = require(__base + 'validation/validation');
 
 // Init vars
 var APIRoutes = express.Router();
 var RestrictedAPIRoutes = express.Router();
+
+
+// JWT Verification middleware
+RestrictedAPIRoutes.use(RouteHelper.verifyToken);
 
 // Register a new user
 APIRoutes.post('/register', validate(validation.register), (req, res, next) => {
@@ -31,14 +39,9 @@ APIRoutes.post('/register', validate(validation.register), (req, res, next) => {
   newUser
     .save()
     .then(() => {
-      // New user saved successfully
-      res.json({
-        success: true,
-        message: 'Registered successfully. Authenticate to get API key.',
-        user: {
-          mail: newUser._doc.email
-        }
-      });
+      res.json(RouteHelper.BasicResponse(true, 'Register successful', {
+        user: newUser
+      }));
     })
     .catch((error) => {
       next(error);
@@ -70,11 +73,9 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
             });
 
             // return the information including the token as JSON
-            res.json({
-              success: true,
-              message: 'Token generated successfully',
+            res.json(RouteHelper.BasicResponse(true, 'Token generated', {
               token: token
-            });
+            }));
           }
         });
       }
@@ -84,36 +85,15 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
     });
 });
 
-// JWT Verification middleware
-RestrictedAPIRoutes.use(function (req, res, next) {
-  // Chheck header, url parameters or post parameters for token
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
-
-  if (token) {
-    // Verify token and check expiration
-    jwt
-      .verify(token, app.get('superSecret'), (error, decodedToken) => {
-        if (error) {
-          next(error);
-        } else {
-          // Pass the decoded token to the rest of the request
-          req.decodedToken = decodedToken;
-          next();
-        }
-      });
-  } else {
-    next(new Error('No token provided'));
-  }
-});
-
 // Get User Document
 RestrictedAPIRoutes.get('/user', (req, res) => {
   var userID = req.decodedToken._doc._id;
 
   getUser(userID)
     .then((user) => {
-      // TODO: Make a factory method for basic response that takes an object as argument that is included with the response
-      res.json(user);
+      res.json(RouteHelper.BasicResponse(true, 'User found', {
+        user: user
+      }));
     })
     .catch((error) => {
       next(error);
@@ -125,7 +105,9 @@ RestrictedAPIRoutes.get('/user/cars', (req, res) => {
   var userID = req.decodedToken._doc._id;
   getUser(userID)
     .then((user) => {
-      res.json(user.cars);
+      res.json(RouteHelper.BasicResponse(true, '', {
+        cars: user.cars
+      }));
     })
     .catch((error) => {
       next(error);
@@ -145,10 +127,9 @@ RestrictedAPIRoutes.post('/user/cars/add', validate(validation.newCar), (req, re
     .then((user) => {
       user.cars.push(newCar);
       user.save().then((user) => {
-          res.json({
-            success: true,
-            message: 'Car added successfully'
-          });
+          res.json(RouteHelper.BasicResponse(true, 'Car added', {
+            car: user.cars.id(newCar._id)
+          }));
         })
         .catch((error) => {
           next(error);
@@ -168,10 +149,7 @@ RestrictedAPIRoutes.delete('/user/cars/:id/remove', (req, res) => {
       user._doc.cars.id(req.params.id).remove();
 
       user.save().then((user) => {
-          res.json({
-            success: true,
-            message: 'Car removed successfully'
-          });
+          res.json(RouteHelper.BasicResponse(true, 'Car removed'));
         })
         .catch((error) => {
           next(error);
@@ -188,7 +166,9 @@ RestrictedAPIRoutes.get('/user/cars/:id/service', (req, res) => {
   getUser(userID)
     .then((user) => {
       var car = user._doc.cars.id(req.params.id);
-      res.json(car.serviceBook);
+      res.json(RouteHelper.BasicResponse(true, '', {
+        serviceBook: car.serviceBook
+      }));
     })
     .catch((error) => {
       next(error);
@@ -219,10 +199,9 @@ RestrictedAPIRoutes.post('/user/cars/:id/service/add', validate(validation.newSe
           user
             .save()
             .then((user) => {
-              res.json({
-                success: true,
-                message: 'Service added successfully'
-              });
+              res.json(RouteHelper.BasicResponse(true, 'Service added', {
+                service: car.serviceBook.id(newService._id)
+              }));
             }).catch((error) => {
               next(error);
             });

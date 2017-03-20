@@ -54,6 +54,7 @@ describe('User', () => {
                     }
                     expect(err).to.be.null;
                     expect(res).to.have.status(200);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                     done();
                 });
         });
@@ -157,7 +158,8 @@ describe('User', () => {
                     }
                     expect(err).to.be.null;
                     expect(res).to.have.status(200);
-                    expect(res.body).to.be.jsonSchema(Schema.Type.User);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    expect(res.body.user).to.be.jsonSchema(Schema.Type.User);
                     done();
                 });
         });
