@@ -9,25 +9,18 @@ let serializeError = require('serialize-error');
  * @returns
  */
 function handleError(err, req, res, next) {
-    switch (err.type) {
-        case 'UserNotFound':
-            return res.json({
-                success: false,
-                error: err.type,
-                message: 'User with the provided email was not found'
-            });
-            break;
-        case 'DBError':
-            return res.json({
-                success: false,
-                error: err.type,
-                message: 'A database error has occured'
-            });
-            break;
-        default:
-            // TODO: If production, then only send error name and message
-            res.status(err.status || 500).json(serializeError(err));
-            break;
+    if (process.env.NODE_ENV == 'production') {
+        res.status(err.status).json({
+            message: 'An error occured',
+            error: {
+                status: err.status,
+                method: err.method,
+                path: er.path
+            }
+        });
+    } else {
+        res.status(err.status || 500).json(serializeError(err));
+        return;
     }
 }
 
