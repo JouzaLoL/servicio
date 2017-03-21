@@ -1,7 +1,7 @@
 // HTTP status codes
 // 200 – OK – Eyerything is working
 // 201 – OK – New resource has been created
-// 204 – OK – The resource was successfully deleted
+// 204 – OK – The resource was successfully deleted, ! NO RESPONSE BODY !
 
 // 400 – Bad Request – The request was invalid or cannot be served. The exact error should be explained in the error payload. E.g. „The JSON is not valid“
 // 401 – Unauthorized – The request requires an user authentication
@@ -9,7 +9,7 @@
 // 404 – Not found – There is no resource behind the URI.
 // 422 – Unprocessable Entity – Should be used if the server cannot process the enitity, e.g. if an image cannot be formatted or mandatory fields are missing in the payload.
 
-// 500 – Internal Server Error – API developers should avoid this error. If an error occurs in the global catch blog, the stracktrace should be logged and not returned as response.
+// 500 – Internal Server Error – API developers should avoid this error. If an error occurs in the global catch block, the stracktrace should be logged and not returned as response.
 
 let app = require('../app.js');
 
@@ -99,7 +99,7 @@ APIRoutes.post('/authenticate', validate(validation.authenticate), function (req
 });
 
 // Get User Document
-RestrictedAPIRoutes.get('/user', (req, res) => {
+RestrictedAPIRoutes.get('/user', (req, res, next) => {
   var userID = req.decodedToken._doc._id;
 
   getUser(userID)
@@ -114,7 +114,7 @@ RestrictedAPIRoutes.get('/user', (req, res) => {
 });
 
 // Get Cars
-RestrictedAPIRoutes.get('/user/cars', (req, res) => {
+RestrictedAPIRoutes.get('/user/cars', (req, res, next) => {
   var userID = req.decodedToken._doc._id;
   getUser(userID)
     .then((user) => {
@@ -128,7 +128,7 @@ RestrictedAPIRoutes.get('/user/cars', (req, res) => {
 });
 
 // Add new Car
-RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res) => {
+RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res, next) => {
   var userID = req.decodedToken._doc._id;
 
   var newCar = new Car({
@@ -139,10 +139,37 @@ RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res) 
   getUser(userID)
     .then((user) => {
       user.cars.push(newCar);
-      user.save().then((user) => {
-          res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
-            car: user.cars.id(newCar._id)
-          }));
+      user.save((err, savedUser) => {
+        if (err) {
+          throw err;
+        }
+        res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
+          car: savedUser._doc.cars.id(newCar._id)
+        }));
+      });
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+// Remove Car
+RestrictedAPIRoutes.delete('/user/cars/:id/', (req, res, next) => {
+  var userID = req.decodedToken._doc._id;
+
+  getUser(userID)
+    .then((user) => {
+      let car = user.cars.id(req.params.id);
+      if (car) {
+        car.remove();
+      } else {
+        res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID'));
+      }
+
+      user
+        .save()
+        .then(() => {
+          res.status(204);
         })
         .catch((error) => {
           next(error);
@@ -153,27 +180,8 @@ RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res) 
     });
 });
 
-// Remove Car
-RestrictedAPIRoutes.delete('/user/cars/:id/', (req, res) => {
-  var userID = req.decodedToken._doc._id;
-
-  getUser(userID)
-    .then((user) => {
-      user._doc.cars.id(req.params.id).remove();
-
-      user.save().then((user) => {
-          res.status(204).json(RouteHelper.BasicResponse(true, 'Car removed'));
-        })
-        .catch((error) => {
-          next(error);
-        });
-    }).catch((error) => {
-      next(error);
-    });
-});
-
 // Get Car's Service entries
-RestrictedAPIRoutes.get('/user/cars/:id/services', (req, res) => {
+RestrictedAPIRoutes.get('/user/cars/:id/services', (req, res, next) => {
   var userID = req.decodedToken._doc._id;
 
   getUser(userID)
@@ -200,7 +208,6 @@ RestrictedAPIRoutes.post('/user/cars/:id/services/', validate(validation.newServ
 
   getUser(userID)
     .then((user) => {
-      console.log(user);
       var car = user.cars.id(req.params.id);
       if (!car) {
         return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
@@ -209,12 +216,12 @@ RestrictedAPIRoutes.post('/user/cars/:id/services/', validate(validation.newServ
       // Need to save embedded doc first, then parent doc !
       car
         .save()
-        .then((car) => {
+        .then((savedCar) => {
           user
             .save()
-            .then((user) => {
+            .then(() => {
               res.status(201).json(RouteHelper.BasicResponse(true, 'Service added', {
-                service: car.serviceBook.id(newService._id)
+                service: savedCar.serviceBook.id(newService._id)
               }));
             }).catch((error) => {
               next(error);
@@ -240,7 +247,11 @@ function getUser(id) {
         _id: id
       })
       .then((user) => {
-        resolve(user);
+        if (user) {
+          resolve(user);
+        } else {
+          reject('No user found');
+        }
       })
       .catch((error) => {
         reject(error);
