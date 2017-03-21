@@ -32,6 +32,7 @@
     "chai-match-json": "^0.1.2",
     "eslint": "^3.17.1",
     "eslint-config-google": "^0.7.1",
+    "express-api-doc": "0.0.11",
     "json-schema-to-mongoose": "^0.2.2",
     "mocha": "^3.2.0",
     "mongoose-schema-jsonschema": "^1.1.10"

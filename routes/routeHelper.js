@@ -26,6 +26,7 @@ class RouteHelper {
         Object.assign(response, params);
         return response;
     }
+
     /**
      * Verifies JSON Web Token
      *
@@ -37,7 +38,7 @@ class RouteHelper {
      * @memberOf RouteHelper
      */
     static verifyToken(req, res, next) {
-        // Chheck header, url parameters or post parameters for token
+        // Check header, url parameters or post parameters for token
         var token = req.body.token || req.query.token || req.headers['x-access-token'];
 
         if (token) {
@@ -53,7 +54,7 @@ class RouteHelper {
                     }
                 });
         } else {
-            next(new Error('No token provided'));
+            res.json(BasicResponse(false, 'No token provided')).status(401);
         }
     }
 }

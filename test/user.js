@@ -25,14 +25,12 @@ let Schema = require(__base + 'jsonschema/schema.js');
 describe('User', () => {
     before((done) => {
         mongoose.connection.dropDatabase((err) => {
-            console.log('dropped db');
             done(err);
         });
     });
 
     afterEach((done) => {
         mongoose.connection.dropDatabase((err) => {
-            console.log('dropped db');
             done(err);
         });
     });
@@ -53,7 +51,7 @@ describe('User', () => {
                         console.log(err);
                     }
                     expect(err).to.be.null;
-                    expect(res).to.have.status(200);
+                    expect(res).to.have.status(201);
                     expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                     done();
                 });
