@@ -39,7 +39,6 @@ describe('User', () => {
         it('should register a new user', (done) => {
             chai.request(app)
                 .post('/api/register')
-                .set('content-type', 'application/x-www-form-urlencoded')
                 .send({
                     email: "test@test.com",
                     password: "testpass",
@@ -62,7 +61,6 @@ describe('User', () => {
         it('should not register a new user with illegal email', (done) => {
             chai.request(app)
                 .post('/api/register')
-                .set('content-type', 'application/x-www-form-urlencoded')
                 .send({
                     email: "bademail",
                     password: "testpass",
@@ -89,7 +87,6 @@ describe('User', () => {
         it('should authenticate a registered user', (done) => {
             chai.request(app)
                 .post('/api/authenticate')
-                .set('content-type', 'application/x-www-form-urlencoded')
                 .send({
                     email: "test@test.com",
                     password: "testpass"
@@ -117,7 +114,6 @@ describe('User', () => {
         it('should not authenticate a registered user against a bad password', (done) => {
             chai.request(app)
                 .post('/api/authenticate')
-                .set('content-type', 'application/x-www-form-urlencoded')
                 .send({
                     email: "test@test.com",
                     password: "badpass"
@@ -148,7 +144,6 @@ describe('User', () => {
         it('should get the user document', (done) => {
             chai.request(app)
                 .get('/api/user')
-                .set('content-type', 'application/x-www-form-urlencoded')
                 .set('x-access-token', authkey)
                 .end((err, res) => {
                     if (err) {

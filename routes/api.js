@@ -25,7 +25,7 @@ let express = require('express');
 let moment = require('moment');
 
 // Route RouteHelper
-let RouteHelper = require(__base + 'routes/routeHelper.js');
+let RouteHelper = require(__base + 'routes/routeHelper');
 
 // Validation
 let validate = require('express-validation');
@@ -52,9 +52,9 @@ APIRoutes.post('/register', validate(validation.register), (req, res, next) => {
   newUser
     .save()
     .then(() => {
-      res.json(RouteHelper.BasicResponse(true, 'Register successful', {
+      res.status(201).json(RouteHelper.BasicResponse(true, 'Register successful', {
         user: newUser
-      }).status(201));
+      }));
     })
     .catch((error) => {
       next(error);
@@ -140,9 +140,9 @@ RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res) 
     .then((user) => {
       user.cars.push(newCar);
       user.save().then((user) => {
-          res.json(RouteHelper.BasicResponse(true, 'Car added', {
+          res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
             car: user.cars.id(newCar._id)
-          }).status(201));
+          }));
         })
         .catch((error) => {
           next(error);
@@ -162,7 +162,7 @@ RestrictedAPIRoutes.delete('/user/cars/:id/', (req, res) => {
       user._doc.cars.id(req.params.id).remove();
 
       user.save().then((user) => {
-          res.json(RouteHelper.BasicResponse(true, 'Car removed').status(204));
+          res.status(204).json(RouteHelper.BasicResponse(true, 'Car removed'));
         })
         .catch((error) => {
           next(error);
@@ -213,9 +213,9 @@ RestrictedAPIRoutes.post('/user/cars/:id/services/', validate(validation.newServ
           user
             .save()
             .then((user) => {
-              res.json(RouteHelper.BasicResponse(true, 'Service added', {
+              res.status(201).json(RouteHelper.BasicResponse(true, 'Service added', {
                 service: car.serviceBook.id(newService._id)
-              }).status(201));
+              }));
             }).catch((error) => {
               next(error);
             });
