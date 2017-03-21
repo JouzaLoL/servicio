@@ -32,49 +32,58 @@ API.Type.User = {
             minLength: 9,
             maxLength: 13
         },
-        cars: {
+        cars: API.Type.CarArray
+    }
+};
+
+// Car array schema
+API.Type.CarArray = {
+    type: 'array',
+    uniqueItems: true,
+    items: API.Type.Car
+};
+
+// Car Schema
+API.Type.Car = {
+    type: 'object',
+    required: ['model', 'year'],
+    properties: {
+        model: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 30
+        },
+        year: {
+            type: 'string',
+            minLength: 4,
+            maxLength: 4
+        },
+        servicebook: {
             type: 'array',
             uniqueItems: true,
-            items: {
-                type: 'object',
-                required: ['model', 'year'],
-                properties: {
-                    model: {
-                        type: 'string',
-                        minLength: 5,
-                        maxLength: 30
-                    },
-                    year: {
-                        type: 'string',
-                        minLength: 4,
-                        maxLength: 4
-                    },
-                    servicebook: {
-                        type: 'array',
-                        uniqueItems: true,
-                        items: {
-                            type: 'object',
-                            required: ['date', 'cost', 'description'],
-                            properties: {
-                                date: {
-                                    type: 'string',
-                                    format: 'date'
-                                },
-                                cost: {
-                                    type: 'string',
-                                    minLength: 5,
-                                    maxLength: 30
-                                },
-                                description: {
-                                    type: 'string',
-                                    minLength: 5,
-                                    maxLength: 30
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            items: API.Type.Service
+        }
+    }
+};
+
+// Service Entry schema
+API.Type.Service = {
+    type: 'object',
+    required: ['date', 'cost', 'description'],
+    properties: {
+        date: {
+            type: 'string',
+            format: 'date'
+        },
+        cost: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 30
+        },
+        description: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 30
         }
     }
 };
