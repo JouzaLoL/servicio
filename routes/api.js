@@ -161,19 +161,25 @@ RestrictedAPIRoutes.delete('/user/cars/:id/', (req, res, next) => {
     .then((user) => {
       let car = user.cars.id(req.params.id);
       if (car) {
-        car.remove();
+        car
+          .remove()
+          .then((removedCar) => {
+            user
+              .save()
+              .then(() => {
+                // ! Always either send data or end response with end()
+                res.status(204).end();
+              })
+              .catch((error) => {
+                next(error);
+              });
+          })
+          .catch((err) => {
+            next(err);
+          });
       } else {
         res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID'));
       }
-
-      user
-        .save()
-        .then(() => {
-          res.status(204);
-        })
-        .catch((error) => {
-          next(error);
-        });
     })
     .catch((error) => {
       next(error);

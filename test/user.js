@@ -235,10 +235,9 @@ describe('Tests', () => {
 
             it("should remove a car", (done) => {
                 // Get a random car ID
-                var randomCarId = testUser.cars[Math.floor(Math.random()*testUser.cars.length)]._id;
-                var id = new TextDecoder("utf-8").decode(randomCarId.id);
+                var randomCarId = testUser.cars[Math.floor(Math.random()*testUser.cars.length)].id;
                 chai.request(app)
-                    .delete('/api/user/cars/' + id)
+                    .delete('/api/user/cars/' + randomCarId)
                     .set('x-access-token', authkey)
                     .end((err, res) => {
                         if (err) {
