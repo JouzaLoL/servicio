@@ -24,12 +24,16 @@ let jwt = require('jsonwebtoken');
 let express = require('express');
 let moment = require('moment');
 
-// Route RouteHelper
+// Route Helper
 let RouteHelper = require(__base + 'routes/routeHelper');
 
 // Validation
-let validate = require('express-validation');
-let validation = require(__base + 'validation/validation');
+// var validate = require('express-jsonschema').validate;
+var validate = require(__base + 'jsonschema/validate.js').validate;
+
+// JSON Schema
+let Schema = require(__base + 'jsonschema/schema.js');
+
 
 // Init vars
 var APIRoutes = express.Router();
@@ -40,7 +44,7 @@ var RestrictedAPIRoutes = express.Router();
 RestrictedAPIRoutes.use(RouteHelper.verifyToken);
 
 // Register a new user
-APIRoutes.post('/register', validate(validation.register), (req, res, next) => {
+APIRoutes.post('/register', validate({body: Schema.Request.Register}), (req, res, next) => {
   var newUser = new User({
     email: req.body.email,
     password: req.body.password,
@@ -62,7 +66,7 @@ APIRoutes.post('/register', validate(validation.register), (req, res, next) => {
 });
 
 // Authenticate a user
-APIRoutes.post('/authenticate', validate(validation.authenticate), function (req, res, next) {
+APIRoutes.post('/authenticate', validate({body: Schema.Request.Authenticate}), function (req, res, next) {
   // Retrieve user from DB
   User
     .findOne({
@@ -128,7 +132,7 @@ RestrictedAPIRoutes.get('/user/cars', (req, res, next) => {
 });
 
 // Add new Car
-RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res, next) => {
+RestrictedAPIRoutes.post('/user/cars/', validate({body: Schema.Request.NewCar}), (req, res, next) => {
   var userID = req.decodedToken._doc._id;
 
   var newCar = new Car({
@@ -154,7 +158,7 @@ RestrictedAPIRoutes.post('/user/cars/', validate(validation.newCar), (req, res, 
 });
 
 // Remove Car
-RestrictedAPIRoutes.delete('/user/cars/:id/', (req, res, next) => {
+RestrictedAPIRoutes.delete('/user/cars/:id/', validate({query: Schema.Request.Params.ID}), (req, res, next) => {
   var userID = req.decodedToken._doc._id;
 
   getUser(userID)
@@ -203,7 +207,7 @@ RestrictedAPIRoutes.get('/user/cars/:id/services', (req, res, next) => {
 });
 
 // Add new Service entry
-RestrictedAPIRoutes.post('/user/cars/:id/services/', validate(validation.newService), (req, res, next) => {
+RestrictedAPIRoutes.post('/user/cars/:id/services/', validate({body: Schema.Request.NewService}), (req, res, next) => {
   var userID = req.decodedToken._doc._id;
 
   var newService = new Service({

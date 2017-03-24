@@ -82,7 +82,6 @@ describe('Tests', () => {
                         telephone: "420420420"
                     })
                     .end((err, res) => {
-                        expect(err).to.not.be.null;
                         expect(res).to.have.status(400);
                         done();
                     });
@@ -235,7 +234,7 @@ describe('Tests', () => {
 
             it("should remove a car", (done) => {
                 // Get a random car ID
-                var randomCarId = testUser.cars[Math.floor(Math.random()*testUser.cars.length)].id;
+                let randomCarId = testUser.cars[Math.floor(Math.random()*testUser.cars.length)].id;
                 chai.request(app)
                     .delete('/api/user/cars/' + randomCarId)
                     .set('x-access-token', authkey)

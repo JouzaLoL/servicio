@@ -19,9 +19,35 @@ function handleError(err, req, res, next) {
             }
         });
     } else {
+        if (err.name == 'JsonSchemaValidation') {
+            res.status(400).json({
+                success: false,
+                statusText: 'Bad Request',
+                error: FormatValidationError(err.validationErrors)
+            });
+            // console.log(FormatValidationError(err.validationErrors));
+            return;
+        }
         res.status(err.status || 500).json(serializeError(err));
-        return;
     }
+}
+
+
+/**
+ * Formats a ValidationError error
+ *
+ * @param {any} errors
+ */
+function FormatValidationError(errors) {
+    var formatted = {};
+    Object.keys(errors).forEach(function (requestProperty) {
+        var propertyErrors = [];
+        errors[requestProperty].forEach(function (error) {
+            propertyErrors.push(error.dataPath + ": " + error.message);
+        });
+        formatted[requestProperty] = propertyErrors.toString();
+    });
+    return formatted;
 }
 
 module.exports = handleError;
