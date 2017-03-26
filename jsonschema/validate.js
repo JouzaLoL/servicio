@@ -26,7 +26,7 @@ function validate(options) {
         });
 
         if (Object.keys(validationErrors).length != 0) {
-            next(new ValidationError(validationErrors));
+            next(validationErrors);
         } else {
             next();
         }

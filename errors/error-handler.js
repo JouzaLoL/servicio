@@ -10,15 +10,6 @@ let serializeError = require('serialize-error');
  */
 function handleError(err, req, res, next) {
     if (process.env.NODE_ENV == 'production') {
-        res.status(err.status).json({
-            message: 'An error occured',
-            error: {
-                status: err.status,
-                method: err.method,
-                path: er.path
-            }
-        });
-    } else {
         if (err.name == 'JsonSchemaValidation') {
             res.status(400).json({
                 success: false,
@@ -27,11 +18,28 @@ function handleError(err, req, res, next) {
             });
             // console.log(FormatValidationError(err.validationErrors));
             return;
+        } else {
+            res.status(err.status).json({
+                message: 'An error occured',
+                error: {
+                    status: err.status,
+                    method: err.method,
+                    path: er.path
+                }
+            });
+        }
+    } else {
+        if (err.name == 'JsonSchemaValidation') {
+            res.status(400).json({
+                success: false,
+                statusText: 'Bad Request',
+                error: FormatValidationError(err.validationErrors)
+            });
+            console.log(FormatValidationError(err.validationErrors));
         }
         res.status(err.status || 500).json(serializeError(err));
     }
 }
-
 
 /**
  * Formats a ValidationError error

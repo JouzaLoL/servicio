@@ -31,23 +31,22 @@ chai.use(require('chai-json-schema'));
 describe('Tests', () => {
     // Top-level cleanup before all tests
     before((done) => {
-        mongoose.connection.dropDatabase((err) => {
+        TestHelper.prepareDB(mongoose).then((err) => {
             done(err);
         });
     });
 
     // Top-level cleanup after all tests
     after((done) => {
-        mongoose.connection.dropDatabase((err) => {
+        TestHelper.prepareDB(mongoose).then((err) => {
             done(err);
         });
     });
 
     describe('System', () => {
         describe('register', () => {
-            // Cleanup
             before((done) => {
-                mongoose.connection.dropDatabase((err) => {
+                TestHelper.prepareDB(mongoose).then((err) => {
                     done(err);
                 });
             });
@@ -89,19 +88,9 @@ describe('Tests', () => {
         });
 
         describe('authenticate', () => {
-            // Cleanup
             before((done) => {
-                mongoose.connection.dropDatabase((err) => {
-                    done(err);
-                });
-            });
-
-            // Add test user
-            before((done) => {
-                TestHelper.addTestUser().then((user) => {
+                TestHelper.prepareDB(mongoose, true).then(() => {
                     done();
-                }, (err) => {
-                    done(err);
                 });
             });
 
@@ -142,47 +131,21 @@ describe('Tests', () => {
         // Test user object for use in tests
         let testUser;
 
-        // Top-level cleanup before all tests
-        before((done) => {
-            mongoose.connection.dropDatabase((err) => {
-                done(err);
-            });
-        });
-
-        // Top-level cleanup after all tests
-        after((done) => {
-            mongoose.connection.dropDatabase((err) => {
-                done(err);
-            });
-        });
-
         // The API key
-        var authkey;
+        var APIKey;
 
-        // Cleanup
         before((done) => {
-            mongoose.connection.dropDatabase((err) => {
-                done(err);
+            TestHelper.prepareDB(mongoose, true).then((user) => {
+                testUser = user;
+                APIKey = TestHelper.getAPIKey(testUser);
+                done();
             });
-        });
-
-        // Add test user and get Auth key
-        before((done) => {
-            TestHelper.addTestUser()
-                .catch((err) => {
-                    done(err);
-                })
-                .then((user) => {
-                    authkey = TestHelper.getAuthKey(user);
-                    testUser = user;
-                    done();
-                });
         });
 
         it('should get the user document', (done) => {
             chai.request(app)
                 .get('/api/user')
-                .set('x-access-token', authkey)
+                .set('x-access-token', APIKey)
                 .end((err, res) => {
                     if (err) {
                         console.log(err);
@@ -199,7 +162,7 @@ describe('Tests', () => {
             it("should get user's cars", (done) => {
                 chai.request(app)
                     .get('/api/user/cars')
-                    .set('x-access-token', authkey)
+                    .set('x-access-token', APIKey)
                     .end((err, res) => {
                         if (err) {
                             console.log(err);
@@ -215,7 +178,7 @@ describe('Tests', () => {
             it("should add new car", (done) => {
                 chai.request(app)
                     .post('/api/user/cars')
-                    .set('x-access-token', authkey)
+                    .set('x-access-token', APIKey)
                     .send({
                         model: "Test Model",
                         year: "2420"
@@ -234,10 +197,10 @@ describe('Tests', () => {
 
             it("should remove a car", (done) => {
                 // Get a random car ID
-                let randomCarId = testUser.cars[Math.floor(Math.random()*testUser.cars.length)].id;
+                let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
                 chai.request(app)
                     .delete('/api/user/cars/' + randomCarId)
-                    .set('x-access-token', authkey)
+                    .set('x-access-token', APIKey)
                     .end((err, res) => {
                         if (err) {
                             console.log(err);
@@ -246,6 +209,25 @@ describe('Tests', () => {
                         expect(res).to.have.status(204);
                         done();
                     });
+            });
+
+            describe('Service', () => {
+                it("should get Car's service entries", (done) => {
+                    // Get a random car ID
+                    let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
+                    chai.request(app)
+                        .get('/api/user/cars/' + randomCarId + '/services')
+                        .set('x-access-token', APIKey)
+                        .end((err, res) => {
+                            if (err) {
+                                console.log(err);
+                            }
+                            expect(err).to.be.null;
+                            expect(res).to.have.status(200);
+                            expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                            done();
+                        });
+                });
             });
         });
     });
@@ -303,9 +285,42 @@ class TestHelper {
      *
      * @memberOf TestHelper
      */
-    static getAuthKey(user) {
+    static getAPIKey(user) {
         return jwt.sign(user, app.get('superSecret'), {
             expiresIn: '24h'
+        });
+    }
+
+    /**
+     * Cleans the database and optionally adds a test user
+     *
+     * @static
+     * @param {any} db
+     * @param {any} done
+     * @param {any} addTestUser
+     *
+     * @memberOf TestHelper
+     */
+    static prepareDB(db, addTestUser) {
+        return new Promise((resolve, reject) => {
+            // Drop the whole database
+            db.connection.dropDatabase()
+                .then(() => {
+                    if (addTestUser) {
+                        TestHelper.addTestUser()
+                            .catch((err) => {
+                                resolve(err);
+                            })
+                            .then((user) => {
+                                resolve(user);
+                            });
+                    } else {
+                        resolve();
+                    }
+                })
+                .catch((err) => {
+                    resolve(err); // Add test user
+                });
         });
     }
 }

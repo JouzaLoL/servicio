@@ -7,8 +7,6 @@ let express = require('express');
 let morgan = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
-
-// Custom error handler
 let errorHandler = require('./errors/error-handler.js');
 
 // Load config
@@ -41,7 +39,6 @@ let apiRoutes = require('./routes/api');
 app.use('/api', apiRoutes.APIRoutes);
 app.use('/api', apiRoutes.RestrictedAPIRoutes);
 
-// Custom error handler
 app.use(errorHandler);
 
 // Start server
