@@ -1,4 +1,5 @@
 let serializeError = require('serialize-error');
+let routeHelper = require('../routes/routeHelper');
 /**
  * Handles errors
  *
@@ -16,7 +17,6 @@ function handleError(err, req, res, next) {
                 statusText: 'Bad Request',
                 error: FormatValidationError(err.validationErrors)
             });
-            // console.log(FormatValidationError(err.validationErrors));
             return;
         } else {
             res.status(err.status).json({
@@ -30,14 +30,13 @@ function handleError(err, req, res, next) {
         }
     } else {
         if (err.name == 'JsonSchemaValidation') {
-            res.status(400).json({
-                success: false,
-                statusText: 'Bad Request',
+            res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
                 error: FormatValidationError(err.validationErrors)
-            });
-            console.log(FormatValidationError(err.validationErrors));
+            }));
+        } else {
+            res.status(err.status || 500).json(serializeError(err));
+            console.log(err);
         }
-        res.status(err.status || 500).json(serializeError(err));
     }
 }
 

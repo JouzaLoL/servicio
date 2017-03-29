@@ -12,6 +12,8 @@ let Models = require(__base + 'models/User.js');
 let User = Models.User;
 let Car = Models.Car;
 let Service = Models.Service;
+// Log all db access to console
+mongoose.set('debug', true);
 
 // JSON Schema
 let Schema = require(__base + 'jsonschema/schema.js');
@@ -61,9 +63,6 @@ describe('Tests', () => {
                         telephone: "420420420"
                     })
                     .end((err, res) => {
-                        if (err) {
-                            console.log(err);
-                        }
                         expect(err).to.be.null;
                         expect(res).to.have.status(201);
                         expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
@@ -102,9 +101,6 @@ describe('Tests', () => {
                         password: "testpass"
                     })
                     .end((err, res) => {
-                        if (err) {
-                            console.log(err);
-                        }
                         expect(err).to.be.null;
                         expect(res).to.have.status(200);
                         done();
@@ -147,9 +143,6 @@ describe('Tests', () => {
                 .get('/api/user')
                 .set('x-access-token', APIKey)
                 .end((err, res) => {
-                    if (err) {
-                        console.log(err);
-                    }
                     expect(err).to.be.null;
                     expect(res).to.have.status(200);
                     expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
@@ -159,14 +152,19 @@ describe('Tests', () => {
         });
 
         describe('Car', () => {
+            before((done) => {
+                TestHelper.prepareDB(mongoose, true).then((user) => {
+                    testUser = user;
+                    APIKey = TestHelper.getAPIKey(testUser);
+                    done();
+                });
+            });
+
             it("should get user's cars", (done) => {
                 chai.request(app)
                     .get('/api/user/cars')
                     .set('x-access-token', APIKey)
                     .end((err, res) => {
-                        if (err) {
-                            console.log(err);
-                        }
                         expect(err).to.be.null;
                         expect(res).to.have.status(200);
                         expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
@@ -184,9 +182,6 @@ describe('Tests', () => {
                         year: "2420"
                     })
                     .end((err, res) => {
-                        if (err) {
-                            console.log(err);
-                        }
                         expect(err).to.be.null;
                         expect(res).to.have.status(201);
                         expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
@@ -196,15 +191,11 @@ describe('Tests', () => {
             });
 
             it("should remove a car", (done) => {
-                // Get a random car ID
                 let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
                 chai.request(app)
                     .delete('/api/user/cars/' + randomCarId)
                     .set('x-access-token', APIKey)
                     .end((err, res) => {
-                        if (err) {
-                            console.log(err);
-                        }
                         expect(err).to.be.null;
                         expect(res).to.have.status(204);
                         done();
@@ -212,16 +203,20 @@ describe('Tests', () => {
             });
 
             describe('Service', () => {
+                before((done) => {
+                    TestHelper.prepareDB(mongoose, true).then((user) => {
+                        testUser = user;
+                        APIKey = TestHelper.getAPIKey(testUser);
+                        done();
+                    });
+                });
+
                 it("should get Car's service entries", (done) => {
-                    // Get a random car ID
                     let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
                     chai.request(app)
                         .get('/api/user/cars/' + randomCarId + '/services')
                         .set('x-access-token', APIKey)
                         .end((err, res) => {
-                            if (err) {
-                                console.log(err);
-                            }
                             expect(err).to.be.null;
                             expect(res).to.have.status(200);
                             expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
@@ -319,7 +314,7 @@ class TestHelper {
                     }
                 })
                 .catch((err) => {
-                    resolve(err); // Add test user
+                    resolve(err);
                 });
         });
     }

@@ -11,9 +11,10 @@
 
 // 500 – Internal Server Error – API developers should avoid this error. If an error occurs in the global catch block, the stracktrace should be logged and not returned as response.
 
-let app = require('../app.js');
+let express = require('express');
+let app = require('../app');
 
-// Models
+// DB stuff
 let UserModels = require(__base + 'models/User');
 let User = UserModels.User;
 let Car = UserModels.Car;
@@ -21,7 +22,6 @@ let Service = UserModels.Service;
 
 // Modules
 let jwt = require('jsonwebtoken');
-let express = require('express');
 let moment = require('moment');
 
 // Route Helper
@@ -41,7 +41,7 @@ RestrictedAPIRoutes.use(RouteHelper.verifyToken);
 // Register a new user
 APIRoutes.post('/register', validate({
   body: Schema.Request.Register
-}), function(req, res, next) {
+}), function (req, res, next) {
   var newUser = new User({
     email: req.body.email,
     password: req.body.password,
@@ -196,7 +196,6 @@ RestrictedAPIRoutes.delete('/user/cars/:id/', validate({
 // Get Car's Service entries
 RestrictedAPIRoutes.get('/user/cars/:id/services', (req, res, next) => {
   var userID = req.decodedToken._doc._id;
-
   getUser(userID)
     .then((user) => {
       var car = user.cars.id(req.params.id);
