@@ -20,7 +20,7 @@ API.Type.Service = {
     properties: {
         date: {
             type: 'string',
-            format: 'date'
+            format: 'date-time'
         },
         cost: {
             type: 'string',
@@ -29,8 +29,8 @@ API.Type.Service = {
         },
         description: {
             type: 'string',
-            minLength: 5,
-            maxLength: 30
+            minLength: 10,
+            maxLength: 300
         }
     }
 };

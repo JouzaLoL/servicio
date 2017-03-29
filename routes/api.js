@@ -227,15 +227,16 @@ RestrictedAPIRoutes.post('/user/cars/:id/services/', validate({
         return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
       }
       car.serviceBook.push(newService);
+      car.markModified('serviceBook');
       // Need to save embedded doc first, then parent doc !
       car
         .save()
-        .then((savedCar) => {
+        .then((savedCar, s) => {
           user
             .save()
             .then(() => {
               res.status(201).json(RouteHelper.BasicResponse(true, 'Service added', {
-                service: savedCar.serviceBook.id(newService._id)
+                service: user.cars.id(car.id).serviceBook.id(newService._id)
               }));
             }).catch((error) => {
               next(error);

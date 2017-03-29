@@ -1,5 +1,8 @@
+'use strict';
+
 let serializeError = require('serialize-error');
 let routeHelper = require('../routes/routeHelper');
+let chalk = require('chalk');
 /**
  * Handles errors
  *
@@ -29,13 +32,16 @@ function handleError(err, req, res, next) {
             });
         }
     } else {
+        // Need to JSON.stringify all errors before using chalk on them
         if (err.name == 'JsonSchemaValidation') {
+            let formattedError = FormatValidationError(err.validationErrors);
             res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
-                error: FormatValidationError(err.validationErrors)
+                error: formattedError
             }));
+            console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
         } else {
             res.status(err.status || 500).json(serializeError(err));
-            console.log(err);
+            console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
         }
     }
 }

@@ -12,14 +12,16 @@ let Models = require(__base + 'models/User.js');
 let User = Models.User;
 let Car = Models.Car;
 let Service = Models.Service;
+
 // Log all db access to console
-mongoose.set('debug', true);
+// mongoose.set('debug', true);
 
 // JSON Schema
 let Schema = require(__base + 'jsonschema/schema.js');
 
 // Authentication
 let jwt = require('jsonwebtoken');
+let moment = require('moment');
 
 // Dev-dependencies
 let chai = require('chai');
@@ -219,6 +221,24 @@ describe('Tests', () => {
                         .end((err, res) => {
                             expect(err).to.be.null;
                             expect(res).to.have.status(200);
+                            expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                            done();
+                        });
+                });
+
+                it("should add new service entry", (done) => {
+                    let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
+                    chai.request(app)
+                        .post('/api/user/cars/' + randomCarId + '/services')
+                        .set('x-access-token', APIKey)
+                        .send({
+                            date: moment().toISOString(),
+                            cost: "42069",
+                            description: "Removed the driving wheel; not needed anymore since we have self-driving cars"
+                        })
+                        .end((err, res) => {
+                            expect(err).to.be.null;
+                            expect(res).to.have.status(201);
                             expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                             done();
                         });
