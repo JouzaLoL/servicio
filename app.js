@@ -4,18 +4,18 @@
 global.__base = __dirname + '/';
 
 let express = require('express');
+var app = express();
+module.exports = app;
+
 let morgan = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
-
-// Custom error handler
 let errorHandler = require('./errors/error-handler.js');
 
 // Load config
 let config = require('config');
 
-var app = express();
-module.exports = app;
+
 
 // MongoDB setup
 mongoose.Promise = global.Promise;
@@ -29,6 +29,7 @@ if (config.util.getEnv('NODE_ENV') != 'test') {
   // use morgan to log at command line
   app.use(morgan('tiny'));
 }
+app.use(morgan('tiny'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
@@ -41,13 +42,9 @@ let apiRoutes = require('./routes/api');
 app.use('/api', apiRoutes.APIRoutes);
 app.use('/api', apiRoutes.RestrictedAPIRoutes);
 
-// Custom error handler
 app.use(errorHandler);
 
 // Start server
 app.listen(3000, () => {
   console.log('! Server started');
 });
-
-// For tests
-module.exports = app;

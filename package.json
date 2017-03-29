@@ -11,13 +11,14 @@
     "test": "mocha"
   },
   "dependencies": {
+    "ajv-i18n": "^1.6.3",
     "bcrypt-nodejs": "0.0.3",
-    "body-parser": "~1.16.0",
+    "body-parser": "~1.17.1",
     "config": "^1.25.1",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.0",
-    "express": "~4.14.1",
-    "express-validation": "^1.0.2",
+    "express": "~4.15.2",
+    "express-json-validator-middleware": "0.0.3",
     "jsonwebtoken": "^7.3.0",
     "moment": "^2.17.1",
     "mongoose": "^4.8.6",
@@ -28,9 +29,13 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-http": "^3.0.0",
+    "chai-json-schema": "^1.4.0",
     "chai-match-json": "^0.1.2",
     "eslint": "^3.17.1",
     "eslint-config-google": "^0.7.1",
-    "mocha": "^3.2.0"
+    "express-api-doc": "0.0.11",
+    "json-schema-to-mongoose": "^0.2.2",
+    "mocha": "^3.2.0",
+    "mongoose-schema-jsonschema": "^1.1.10"
   }
 }

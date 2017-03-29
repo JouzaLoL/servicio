@@ -45,9 +45,9 @@ userSchema.pre('save', function save(next) {
         if (err) {
             return next(err);
         }
-        bcrypt.hash(user.password, salt, null, (err, hash) => {
-            if (err) {
-                return next(err);
+        bcrypt.hash(user.password, salt, null, (hashErr, hash) => {
+            if (hashErr) {
+                return next(hashErr);
             }
             user.password = hash;
             next();
@@ -62,6 +62,7 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword,
     });
 };
 
+// ! mongoose.mode('Collection_name_in_singular', schema to use);
 const Service = mongoose.model('Service', serviceSchema);
 const Car = mongoose.model('Car', carSchema);
 const User = mongoose.model('User', userSchema);
