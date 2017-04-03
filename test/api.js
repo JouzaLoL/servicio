@@ -13,6 +13,10 @@ let User = Models.User;
 let Car = Models.Car;
 let Service = Models.Service;
 
+// Receipt stuff
+let fs = require('fs');
+let imageType = require('image-type');
+
 // Log all db access to console
 // mongoose.set('debug', true);
 
@@ -192,6 +196,24 @@ describe('Tests', () => {
                     });
             });
 
+            it("should update an existing car", (done) => {
+                let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
+                chai.request(app)
+                    .patch('/api/user/cars/' + randomCarId)
+                    .set('x-access-token', APIKey)
+                    .send({
+                        model: "Updated Model",
+                        year: "1999"
+                    })
+                    .end((err, res) => {
+                        expect(err).to.be.null;
+                        expect(res).to.have.status(201);
+                        expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                        expect(res.body.updatedCar).to.be.jsonSchema(Schema.Type.Car);
+                        done();
+                    });
+            });
+
             it("should remove a car", (done) => {
                 let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
                 chai.request(app)
@@ -222,19 +244,25 @@ describe('Tests', () => {
                             expect(err).to.be.null;
                             expect(res).to.have.status(200);
                             expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                            expect(res.body.serviceBook).to.be.jsonSchema(Schema.Type.ServiceArray);
                             done();
                         });
                 });
 
                 it("should add new service entry", (done) => {
                     let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
+                    let image = fs.readFileSync('test/receipt.jpg');
                     chai.request(app)
                         .post('/api/user/cars/' + randomCarId + '/services')
                         .set('x-access-token', APIKey)
                         .send({
                             date: moment().toISOString(),
                             cost: "42069",
-                            description: "Removed the driving wheel; not needed anymore since we have self-driving cars"
+                            description: "Removed the driving wheel; not needed anymore since we have self-driving cars",
+                            receipt: {
+                                data: new Buffer(image).toString('base64'),
+                                contentType: imageType(image).mime
+                            }
                         })
                         .end((err, res) => {
                             expect(err).to.be.null;
@@ -263,6 +291,7 @@ class TestHelper {
      */
     static addTestUser() {
         return new Promise((resolve, reject) => {
+            let image = fs.readFileSync('test/receipt.jpg');
             var testUser = new User({
                 email: "test@test.com",
                 password: "testpass",
@@ -276,7 +305,11 @@ class TestHelper {
                             new Service({
                                 date: new Date(Date.now()),
                                 cost: '3200',
-                                description: 'Replaced brakes'
+                                description: 'Replaced brakes',
+                                receipt: {
+                                    data: new Buffer(image).toString('base64'),
+                                    contentType: imageType(image).mime
+                                }
                             })
                         ]
                     })
@@ -301,7 +334,7 @@ class TestHelper {
      * @memberOf TestHelper
      */
     static getAPIKey(user) {
-        return jwt.sign(user, app.get('superSecret'), {
+        return jwt.sign({id: user.id}, app.get('superSecret'), {
             expiresIn: '24h'
         });
     }

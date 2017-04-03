@@ -11,36 +11,44 @@
 
 // 500 – Internal Server Error – API developers should avoid this error. If an error occurs in the global catch block, the stracktrace should be logged and not returned as response.
 
-let express = require('express');
+// Always require app first
 let app = require('../app');
+let express = require('express');
 
-// DB stuff
+// Modules
+let jwt = require('jsonwebtoken');
+let moment = require('moment');
+let imageType = require('image-type');
+
+// Database Stuff
 let UserModels = require(__base + 'models/User');
 let User = UserModels.User;
 let Car = UserModels.Car;
 let Service = UserModels.Service;
 
-// Modules
-let jwt = require('jsonwebtoken');
-let moment = require('moment');
-
 // Route Helper
 let RouteHelper = require(__base + 'routes/routeHelper');
 
 // Validation
-var validate = require(__base + 'jsonschema/validate.js').validate;
+let validate = require(__base + 'jsonschema/validate.js').validate;
 let Schema = require(__base + 'jsonschema/schema.js');
 
 // Init vars
-var APIRoutes = express.Router();
-var RestrictedAPIRoutes = express.Router();
+var UserAPIUnrestricted = express.Router();
+var VendorAPIUnrestricted = express.Router();
+var UserAPI = express.Router();
+var VendorAPI = express.Router();
 
 // JWT Verification middleware
-RestrictedAPIRoutes.use(RouteHelper.verifyToken);
+UserAPI.use(RouteHelper.verifyToken);
+VendorAPI.use(RouteHelper.verifyToken);
 
-// Register a new user
-APIRoutes.post('/register', validate({
-  body: Schema.Request.Register
+/*
+BEGIN UNRESTRICTED USER API
+*/
+
+UserAPIUnrestricted.post('/register', validate({
+  body: Schema.Type.User
 }), function (req, res, next) {
   var newUser = new User({
     email: req.body.email,
@@ -53,7 +61,7 @@ APIRoutes.post('/register', validate({
   newUser
     .save()
     .then(() => {
-      res.status(201).json(RouteHelper.BasicResponse(true, 'Register successful', {
+      res.status(201).json(RouteHelper.BasicResponse(true, 'User register successful', {
         user: newUser
       }));
     })
@@ -62,8 +70,7 @@ APIRoutes.post('/register', validate({
     });
 });
 
-// Authenticate a user
-APIRoutes.post('/authenticate', validate({
+UserAPIUnrestricted.post('/authenticate', validate({
   body: Schema.Request.Authenticate
 }), function (req, res, next) {
   // Retrieve user from DB
@@ -84,12 +91,14 @@ APIRoutes.post('/authenticate', validate({
           } else if (isMatch) {
             // Passsword OK
             // Create a token
-            let token = jwt.sign(user, app.get('superSecret'), {
+            let token = jwt.sign({
+              id: user.id
+            }, app.get('superSecret'), {
               expiresIn: '24h'
             });
 
             // return the information including the token as JSON
-            res.json(RouteHelper.BasicResponse(true, 'Token generated', {
+            res.json(RouteHelper.BasicResponse(true, 'Authentication success. Token generated', {
               token: token
             }));
           }
@@ -101,9 +110,83 @@ APIRoutes.post('/authenticate', validate({
     });
 });
 
+/*
+END UNRESTRICTED USER API
+*/
+
+/*
+BEGIN UNRESTRICTED VENDOR API
+*/
+
+VendorAPIUnrestricted.post('/register', validate({
+  body: Schema.Type.Vendor
+}), function (req, res, next) {
+  var newVendor = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+  });
+
+  // Save the new User to DB
+  newVendor
+    .save()
+    .then(() => {
+      res.status(201).json(RouteHelper.BasicResponse(true, 'Vendor register successful', {
+        user: newVendor
+      }));
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+VendorAPIUnrestricted.post('/authenticate', validate({
+  body: Schema.Request.Authenticate
+}), function (req, res, next) {
+  // Retrieve user from DB
+  User
+    .findOne({
+      email: req.body.email
+    })
+    .then((user) => {
+      // No user found
+      if (!user) {
+        next(new Error('User not found in database'));
+      } else if (user) {
+        // User found
+        // Verify password
+        user.comparePassword(req.body.password, (error, isMatch) => {
+          if (!isMatch) {
+            next(new Error("Passwords don't match"));
+          } else if (isMatch) {
+            // Passsword OK
+            // Create a token
+            let token = jwt.sign({
+              id: user.id
+            }, app.get('superSecret'), {
+              expiresIn: '24h'
+            });
+
+            // return the information including the token as JSON
+            res.json(RouteHelper.BasicResponse(true, 'Authentication success. Token generated', {
+              token: token
+            }));
+          }
+        });
+      }
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+/*
+END UNRESTRICTED VENDOR API
+*/
+
 // Get User Document
-RestrictedAPIRoutes.get('/user', (req, res, next) => {
-  var userID = req.decodedToken._doc._id;
+UserAPI.get('/', (req, res, next) => {
+  var userID = req.decodedToken.id;
 
   getUser(userID)
     .then((user) => {
@@ -117,8 +200,8 @@ RestrictedAPIRoutes.get('/user', (req, res, next) => {
 });
 
 // Get Cars
-RestrictedAPIRoutes.get('/user/cars', (req, res, next) => {
-  var userID = req.decodedToken._doc._id;
+UserAPI.get('/cars', (req, res, next) => {
+  var userID = req.decodedToken.id;
   getUser(userID)
     .then((user) => {
       res.json(RouteHelper.BasicResponse(true, '', {
@@ -131,10 +214,10 @@ RestrictedAPIRoutes.get('/user/cars', (req, res, next) => {
 });
 
 // Add new Car
-RestrictedAPIRoutes.post('/user/cars/', validate({
+UserAPI.post('/cars/', validate({
   body: Schema.Request.NewCar
 }), (req, res, next) => {
-  var userID = req.decodedToken._doc._id;
+  var userID = req.decodedToken.id;
 
   var newCar = new Car({
     model: req.body.model,
@@ -158,11 +241,44 @@ RestrictedAPIRoutes.post('/user/cars/', validate({
     });
 });
 
+// Update an existing Car
+UserAPI.patch('/cars/:id/', validate({
+  body: Schema.Request.PatchCar
+}), (req, res, next) => {
+  var userID = req.decodedToken.id;
+
+  getUser(userID)
+    .then((user) => {
+      let carToBeUpdated = user.cars.id(req.params.id);
+      if (!carToBeUpdated) {
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID'));
+      }
+
+      Object.keys(req.body).forEach(function (key) {
+        carToBeUpdated[key] = req.body[key];
+      }, this);
+
+      user
+        .save()
+        .then((savedUser) => {
+          res.status(201).json(RouteHelper.BasicResponse(true, 'Car updated', {
+            updatedCar: savedUser.cars.id(carToBeUpdated.id)
+          }));
+        })
+        .catch((error) => {
+          next(error);
+        });
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
 // Remove Car
-RestrictedAPIRoutes.delete('/user/cars/:id/', validate({
+UserAPI.delete('/cars/:id/', validate({
   query: Schema.Request.Params.ID
 }), (req, res, next) => {
-  var userID = req.decodedToken._doc._id;
+  var userID = req.decodedToken.id;
 
   getUser(userID)
     .then((user) => {
@@ -194,8 +310,8 @@ RestrictedAPIRoutes.delete('/user/cars/:id/', validate({
 });
 
 // Get Car's Service entries
-RestrictedAPIRoutes.get('/user/cars/:id/services', (req, res, next) => {
-  var userID = req.decodedToken._doc._id;
+UserAPI.get('/cars/:id/services', (req, res, next) => {
+  var userID = req.decodedToken.id;
   getUser(userID)
     .then((user) => {
       var car = user.cars.id(req.params.id);
@@ -209,15 +325,21 @@ RestrictedAPIRoutes.get('/user/cars/:id/services', (req, res, next) => {
 });
 
 // Add new Service entry
-RestrictedAPIRoutes.post('/user/cars/:id/services/', validate({
+UserAPI.post('/cars/:id/services/', validate({
   body: Schema.Request.NewService
 }), (req, res, next) => {
-  var userID = req.decodedToken._doc._id;
+  var userID = req.decodedToken.id;
+
+  let image = new Buffer(req.body.receipt.data, 'base64');
 
   var newService = new Service({
     date: moment().format(req.body.date + ""),
     cost: req.body.cost,
-    description: req.body.description
+    description: req.body.description,
+    receipt: {
+      data: image,
+      contentType: imageType(image).mime
+    }
   });
 
   getUser(userID)
@@ -276,6 +398,8 @@ function getUser(id) {
 
 // Export all routes
 module.exports = {
-  APIRoutes,
-  RestrictedAPIRoutes
+  UserAPIUnrestricted,
+  VendorAPIUnrestricted,
+  UserAPI,
+  VendorAPI
 };

@@ -7,15 +7,16 @@ let express = require('express');
 var app = express();
 module.exports = app;
 
+// Modules
 let morgan = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
+
+// Custom error handler
 let errorHandler = require('./errors/error-handler.js');
 
 // Load config
 let config = require('config');
-
-
 
 // MongoDB setup
 mongoose.Promise = global.Promise;
@@ -25,26 +26,27 @@ mongoose.connect(config.db);
 app.set('superSecret', config.secret);
 
 // Middleware
-if (config.util.getEnv('NODE_ENV') != 'test') {
-  // use morgan to log at command line
+if (config.util.getEnv('NODE_ENV') != 'production') {
   app.use(morgan('tiny'));
 }
-app.use(morgan('tiny'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
 }));
 
-// Route vars
-let apiRoutes = require('./routes/api');
+// Rotues
+let APIRoutes = require('./routes/api');
 
 // Routes
-app.use('/api', apiRoutes.APIRoutes);
-app.use('/api', apiRoutes.RestrictedAPIRoutes);
+app.use('/api/user', APIRoutes.UserAPI);
+app.use('/api/user', APIRoutes.UserAPIUnrestricted);
+app.use('/api/vendor', APIRoutes.VendorAPI);
+app.use('/api', APIRoutes.VendorAPIUnrestricted);
 
+// Error handler
 app.use(errorHandler);
 
 // Start server
 app.listen(3000, () => {
-  console.log('! Server started');
+  console.log('Server started');
 });
