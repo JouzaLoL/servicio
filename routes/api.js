@@ -184,6 +184,10 @@ VendorAPIUnrestricted.post('/authenticate', validate({
 END UNRESTRICTED VENDOR API
 */
 
+/*
+BEGIN RESTRICTED USER API
+*/
+
 // Get User Document
 UserAPI.get('/', (req, res, next) => {
   var userID = req.decodedToken.id;
@@ -214,7 +218,7 @@ UserAPI.get('/cars', (req, res, next) => {
 });
 
 // Add new Car
-UserAPI.post('/cars/', validate({
+UserAPI.post('/cars', validate({
   body: Schema.Request.NewCar
 }), (req, res, next) => {
   var userID = req.decodedToken.id;
@@ -324,52 +328,93 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
     });
 });
 
-// Add new Service entry
-UserAPI.post('/cars/:id/services/', validate({
+/*
+END RESTRICTED USER API
+*/
+
+/*
+BEGIN RESTRICTED VENDOR API
+*/
+
+VendorAPI.get('/cars/search/:type/:query', validate({
+  params: Schema.Request.Search
+}), (req, res, next) => {
+  let searchtype = req.params.type;
+  let query = req.params.query;
+
+  switch (searchtype) {
+    case "spz":
+      Car.findOne({
+          SPZ: query
+        }).then((car) => {
+          if (!car) {
+            return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
+          } else {
+            return res.json(RouteHelper.BasicResponse(true, 'Car found', {
+              car: car
+            }));
+          }
+        })
+        .catch((err) => {
+          next(err);
+        });
+      break;
+
+    default:
+      break;
+  }
+});
+
+VendorAPI.post('/cars/:id/services/', validate({
   body: Schema.Request.NewService
 }), (req, res, next) => {
-  var userID = req.decodedToken.id;
+  var VendorID = req.decodedToken.id;
 
   let image = new Buffer(req.body.receipt.data, 'base64');
 
   var newService = new Service({
-    date: moment().format(req.body.date + ""),
+    date: req.body.date ? moment().format(req.body.date + "") : moment().format(),
     cost: req.body.cost,
     description: req.body.description,
+    vendorID: VendorID,
     receipt: {
       data: image,
       contentType: imageType(image).mime
     }
   });
 
-  getUser(userID)
-    .then((user) => {
-      var car = user.cars.id(req.params.id);
+  Car.findOne({
+      _id: req.params.id
+    })
+    .then((car) => {
       if (!car) {
         return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
+      } else {
+        car.serviceBook.push(newService);
+        car.markModified('serviceBook');
+        // Need to save embedded doc first, then parent doc !
+        car
+          .save()
+          .then((savedCar) => {
+            user
+              .save()
+              .then(() => {
+                res.status(201).json(RouteHelper.BasicResponse(true, 'Service added', {
+                  service: user.cars.id(car.id).serviceBook.id(newService._id)
+                }));
+              }).catch((error) => {
+                next(error);
+              });
+          }).catch((error) => {
+            next(error);
+          });
       }
-      car.serviceBook.push(newService);
-      car.markModified('serviceBook');
-      // Need to save embedded doc first, then parent doc !
-      car
-        .save()
-        .then((savedCar, s) => {
-          user
-            .save()
-            .then(() => {
-              res.status(201).json(RouteHelper.BasicResponse(true, 'Service added', {
-                service: user.cars.id(car.id).serviceBook.id(newService._id)
-              }));
-            }).catch((error) => {
-              next(error);
-            });
-        }).catch((error) => {
-          next(error);
-        });
-    }).catch((error) => {
-      next(error);
+    })
+    .catch((err) => {
+      next(err);
     });
 });
+
 
 /**
  * Gets User from DB by ID

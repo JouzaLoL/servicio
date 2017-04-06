@@ -196,18 +196,34 @@ API.Request.PatchCar = {
 };
 API.Request.NewService = API.Type.Service;
 
+API.Request.Search = {
+    additionalProperties: false,
+    type: 'object',
+    properties: {
+        type: {
+            type: 'string',
+            enum: ["spz", "ownerid", "carid"]
+        },
+        query: {
+            type: 'string',
+        }
+    }
+};
+
 
 // Query with ID (for example for a Car)
 API.Request.Params.ID = {
     type: 'object',
     properties: {
-        id: {
-            type: 'string',
-            pattern: '/[a-zA-Z0-9]/',
-            minLength: 24,
-            maxLength: 24
-        }
+        id: API.Type.ID
     }
+};
+
+API.Type.ID = {
+    type: 'string',
+    pattern: '/[a-zA-Z0-9]/',
+    minLength: 24,
+    maxLength: 24
 };
 
 module.exports = API;

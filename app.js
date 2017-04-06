@@ -11,11 +11,12 @@ module.exports = app;
 let morgan = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
+let chalk = require('chalk');
 
 // Custom error handler
 let errorHandler = require('./errors/error-handler.js');
 
-// Load config
+// Variable configuration
 let config = require('config');
 
 // MongoDB setup
@@ -48,5 +49,5 @@ app.use(errorHandler);
 
 // Start server
 app.listen(3000, () => {
-  console.log('Server started');
+  console.log(chalk.green('Server started'));
 });

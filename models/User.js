@@ -7,6 +7,7 @@ const serviceSchema = new mongoose.Schema({
     date: Date,
     cost: String,
     description: String,
+    vendorID: String,
     receipt: {
         data: Buffer,
         contentType: String
