@@ -54,7 +54,7 @@ class RouteHelper {
                     }
                 });
         } else {
-            res.json(BasicResponse(false, 'No token provided')).status(401);
+            res.json(RouteHelper.BasicResponse(false, 'No token provided')).status(401);
         }
     }
 }

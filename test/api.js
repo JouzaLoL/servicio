@@ -12,6 +12,7 @@ let Models = require(__base + 'models/User.js');
 let User = Models.User;
 let Car = Models.Car;
 let Service = Models.Service;
+let Vendor = Models.Vendor;
 
 // Receipt stuff
 let fs = require('fs');
@@ -36,7 +37,7 @@ chai.use(require('chai-http'));
 chai.use(require('chai-json-schema'));
 
 // Top-level test block
-describe('Tests', () => {
+describe('API', () => {
     // Top-level cleanup before all tests
     before((done) => {
         TestHelper.prepareDB(mongoose).then((err) => {
@@ -51,7 +52,7 @@ describe('Tests', () => {
         });
     });
 
-    describe('System', () => {
+    describe('User Unrestricted', () => {
         describe('register', () => {
             before((done) => {
                 TestHelper.prepareDB(mongoose).then((err) => {
@@ -61,13 +62,8 @@ describe('Tests', () => {
 
             it('should register a new user', (done) => {
                 chai.request(app)
-                    .post('/api/register')
-                    .send({
-                        email: "test@test.com",
-                        password: "testpass",
-                        name: "Test Testingson",
-                        telephone: "420420420"
-                    })
+                    .post('/api/user/register')
+                    .send(TestHelper.getTestUser())
                     .end((err, res) => {
                         expect(err).to.be.null;
                         expect(res).to.have.status(201);
@@ -77,13 +73,93 @@ describe('Tests', () => {
             });
 
             it('should not register a new user with illegal email', (done) => {
+                let baduser = TestHelper.getTestUser();
+                baduser.email = 'bademail.com';
                 chai.request(app)
-                    .post('/api/register')
+                    .post('/api/user/register')
+                    .send(baduser)
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(err).to.have.status(400);
+                        done();
+                    });
+            });
+        });
+
+        describe('authenticate', () => {
+            before((done) => {
+                TestHelper.prepareDB(mongoose, true).then(() => {
+                    done();
+                });
+            });
+
+            it('should authenticate a registered user', (done) => {
+                let authform = {
+                    email: TestHelper.getTestUser().email,
+                    password: TestHelper.getTestUser().password,
+                };
+
+                chai.request(app)
+                    .post('/api/user/authenticate')
+                    .send(authform)
+                    .end((err, res) => {
+                        expect(err).to.be.null;
+                        expect(res).to.have.status(200);
+                        expect(res.body).to.have.property('token');
+                        done();
+                    });
+            });
+
+            it('should not authenticate a registered user against a bad password', (done) => {
+                let authform = {
+                    email: TestHelper.getTestUser().email,
+                    password: "baspassword",
+                };
+                chai.request(app)
+                    .post('/api/user/authenticate')
+                    .send(authform)
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(res).to.have.status(500);
+                        done();
+                    });
+            });
+        });
+    });
+
+    describe('Vendor Unrestricted', () => {
+        describe('register', () => {
+            before((done) => {
+                TestHelper.prepareDB(mongoose).then((err) => {
+                    done(err);
+                });
+            });
+
+            it('should register a new vendor', (done) => {
+                chai.request(app)
+                    .post('/api/vendor/register')
                     .send({
-                        email: "bademail",
-                        password: "testpass",
-                        name: "Test Testingson",
-                        telephone: "420420420"
+                        email: "vendor@vendor.com",
+                        password: "vendorpass",
+                        name: "Vendor Vendorson",
+                        telephone: "111222333"
+                    })
+                    .end((err, res) => {
+                        expect(err).to.be.null;
+                        expect(res).to.have.status(201);
+                        expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                        done();
+                    });
+            });
+
+            it('should not register a new vendor with illegal email', (done) => {
+                chai.request(app)
+                    .post('/api/vendor/register')
+                    .send({
+                        email: "badvendoremail.com",
+                        password: "vendorpass",
+                        name: "Vendor Vendorson",
+                        telephone: "111222333"
                     })
                     .end((err, res) => {
                         expect(res).to.have.status(400);
@@ -99,12 +175,13 @@ describe('Tests', () => {
                 });
             });
 
-            it('should authenticate a registered user', (done) => {
+            it('should authenticate a registered vendor', (done) => {
+                let regVendor = TestHelper.getTestVendor();
                 chai.request(app)
-                    .post('/api/authenticate')
+                    .post('/api/vendor/authenticate')
                     .send({
-                        email: "test@test.com",
-                        password: "testpass"
+                        email: regVendor.email,
+                        password: regVendor.password
                     })
                     .end((err, res) => {
                         expect(err).to.be.null;
@@ -113,9 +190,9 @@ describe('Tests', () => {
                     });
             });
 
-            it('should not authenticate a registered user against a bad password', (done) => {
+            it('should not authenticate a registered vendor against a bad password', (done) => {
                 chai.request(app)
-                    .post('/api/authenticate')
+                    .post('/api/vendor/authenticate')
                     .send({
                         email: "test@test.com",
                         password: "badpass"
@@ -138,7 +215,7 @@ describe('Tests', () => {
 
         before((done) => {
             TestHelper.prepareDB(mongoose, true).then((user) => {
-                testUser = user;
+                testUser = user[0];
                 APIKey = TestHelper.getAPIKey(testUser);
                 done();
             });
@@ -160,7 +237,7 @@ describe('Tests', () => {
         describe('Car', () => {
             before((done) => {
                 TestHelper.prepareDB(mongoose, true).then((user) => {
-                    testUser = user;
+                    testUser = user[0];
                     APIKey = TestHelper.getAPIKey(testUser);
                     done();
                 });
@@ -229,7 +306,7 @@ describe('Tests', () => {
             describe('Service', () => {
                 before((done) => {
                     TestHelper.prepareDB(mongoose, true).then((user) => {
-                        testUser = user;
+                        testUser = user[0];
                         APIKey = TestHelper.getAPIKey(testUser);
                         done();
                     });
@@ -283,6 +360,86 @@ describe('Tests', () => {
  */
 class TestHelper {
     /**
+     * Returns a test user with optional custom parameters
+     *
+     * @static
+     * @param {any} params
+     * @returns
+     *
+     * @memberOf TestHelper
+     */
+    static getTestUser(params) {
+        var user = {
+            email: "test@test.com",
+            password: "testpass",
+            name: "Test Testingson",
+            telephone: "420420420"
+        };
+        Object.assign(user, params);
+        return user;
+    }
+
+    /**
+     * Returns a test car with optional custom parameters
+     *
+     * @static
+     * @param {any} params
+     * @returns
+     *
+     * @memberOf TestHelper
+     */
+    static getTestCar(params) {
+        var car = {
+            model: 'Skoda Octavia',
+            year: '2011',
+            SPZ: '2M59989'
+        };
+        Object.assign(car, params);
+        return car;
+    }
+
+    /**
+     * Returns a test service with optional custom parameters
+     *
+     * @static
+     * @param {any} params
+     * @returns
+     *
+     * @memberOf TestHelper
+     */
+    static getTestService(params) {
+        var service = {
+            date: new Date(Date.now()),
+            cost: '3200',
+            description: 'Replaced brakes'
+        };
+        Object.assign(service, params);
+        return service;
+    }
+
+    /**
+     * Returns a test vendor with optional custom parameters
+     *
+     * @static
+     * @param {any} params
+     * @returns
+     *
+     * @memberOf TestHelper
+     */
+    static getTestVendor(params) {
+        var vendor = {
+            email: "vendor@vendor.com",
+            password: "vendorpass",
+            name: "Vendor Vendorson",
+            telephone: "111222333",
+            address: "11 Vendor Street, Vendor Avenue, New Vendor"
+        };
+        Object.assign(vendor, params);
+        return vendor;
+    }
+
+
+    /**
      * Adds a test user to the DB
      *
      * @param {any} done Callback for Mocha to finish
@@ -292,35 +449,45 @@ class TestHelper {
     static addTestUser() {
         return new Promise((resolve, reject) => {
             let image = fs.readFileSync('test/receipt.jpg');
-            var testUser = new User({
-                email: "test@test.com",
-                password: "testpass",
-                name: "Test Testingson",
-                telephone: "420420420",
-                cars: [
-                    new Car({
-                        model: 'Skoda Octavia',
-                        year: '2011',
-                        serviceBook: [
-                            new Service({
-                                date: new Date(Date.now()),
-                                cost: '3200',
-                                description: 'Replaced brakes',
-                                receipt: {
-                                    data: new Buffer(image).toString('base64'),
-                                    contentType: imageType(image).mime
-                                }
-                            })
-                        ]
-                    })
-                ]
-            });
+            let testUser = new User(TestHelper.getTestUser({
+                cars: [TestHelper.getTestCar({
+                    serviceBook: [TestHelper.getTestService({
+                        receipt: {
+                            data: new Buffer(image).toString('base64'),
+                            contentType: imageType(image).mime
+                        }
+                    })]
+                })]
+            }));
 
             testUser.save((err, user) => {
                 if (err) {
                     reject(err);
                 }
                 resolve(user);
+            });
+        });
+    }
+
+
+    /**
+     * Adds a test Vendor
+     *
+     * @static
+     * @returns
+     *
+     * @memberOf TestHelper
+     */
+    static addTestVendor() {
+        return new Promise((resolve, reject) => {
+            let testVendor = new Vendor(TestHelper.getTestVendor());
+
+            testVendor.save((err, vendor) => {
+                if (err) {
+                    return reject(err);
+                } else {
+                    resolve(vendor);
+                }
             });
         });
     }
@@ -334,7 +501,9 @@ class TestHelper {
      * @memberOf TestHelper
      */
     static getAPIKey(user) {
-        return jwt.sign({id: user.id}, app.get('superSecret'), {
+        return jwt.sign({
+            id: user.id
+        }, app.get('superSecret'), {
             expiresIn: '24h'
         });
     }
@@ -349,18 +518,18 @@ class TestHelper {
      *
      * @memberOf TestHelper
      */
-    static prepareDB(db, addTestUser) {
+    static prepareDB(db, addTestUserAndVendor) {
         return new Promise((resolve, reject) => {
             // Drop the whole database
             db.connection.dropDatabase()
                 .then(() => {
-                    if (addTestUser) {
-                        TestHelper.addTestUser()
-                            .catch((err) => {
-                                resolve(err);
+                    if (addTestUserAndVendor) {
+                        Promise.all([TestHelper.addTestUser(), TestHelper.addTestVendor()])
+                            .then((values) => {
+                                resolve(values);
                             })
-                            .then((user) => {
-                                resolve(user);
+                            .catch((err) => {
+                                reject(err);
                             });
                     } else {
                         resolve();

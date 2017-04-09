@@ -25,6 +25,7 @@ let UserModels = require(__base + 'models/User');
 let User = UserModels.User;
 let Car = UserModels.Car;
 let Service = UserModels.Service;
+let Vendor = UserModels.Vendor;
 
 // Route Helper
 let RouteHelper = require(__base + 'routes/routeHelper');
@@ -144,25 +145,25 @@ VendorAPIUnrestricted.post('/authenticate', validate({
   body: Schema.Request.Authenticate
 }), function (req, res, next) {
   // Retrieve user from DB
-  User
+  Vendor
     .findOne({
       email: req.body.email
     })
-    .then((user) => {
-      // No user found
-      if (!user) {
-        next(new Error('User not found in database'));
-      } else if (user) {
-        // User found
+    .then((vendor) => {
+      // No vendor found
+      if (!vendor) {
+        next(new Error('vendor not found in database'));
+      } else if (vendor) {
+        // vendor found
         // Verify password
-        user.comparePassword(req.body.password, (error, isMatch) => {
+        vendor.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
             next(new Error("Passwords don't match"));
           } else if (isMatch) {
             // Passsword OK
             // Create a token
             let token = jwt.sign({
-              id: user.id
+              id: vendor.id
             }, app.get('superSecret'), {
               expiresIn: '24h'
             });
@@ -336,33 +337,25 @@ END RESTRICTED USER API
 BEGIN RESTRICTED VENDOR API
 */
 
-VendorAPI.get('/cars/search/:type/:query', validate({
+VendorAPI.get('/cars/search/:query', validate({
   params: Schema.Request.Search
 }), (req, res, next) => {
-  let searchtype = req.params.type;
   let query = req.params.query;
 
-  switch (searchtype) {
-    case "spz":
-      Car.findOne({
-          SPZ: query
-        }).then((car) => {
-          if (!car) {
-            return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
-          } else {
-            return res.json(RouteHelper.BasicResponse(true, 'Car found', {
-              car: car
-            }));
-          }
-        })
-        .catch((err) => {
-          next(err);
-        });
-      break;
-
-    default:
-      break;
-  }
+  Car.findOne({
+      SPZ: query
+    }).then((car) => {
+      if (!car) {
+        return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
+      } else {
+        return res.json(RouteHelper.BasicResponse(true, 'Car found', {
+          car: car
+        }));
+      }
+    })
+    .catch((err) => {
+      next(err);
+    });
 });
 
 VendorAPI.post('/cars/:id/services/', validate({

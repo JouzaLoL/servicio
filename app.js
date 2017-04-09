@@ -39,10 +39,11 @@ app.use(bodyParser.urlencoded({
 let APIRoutes = require('./routes/api');
 
 // Routes
-app.use('/api/user', APIRoutes.UserAPI);
 app.use('/api/user', APIRoutes.UserAPIUnrestricted);
+app.use('/api/user', APIRoutes.UserAPI);
+app.use('/api/vendor', APIRoutes.VendorAPIUnrestricted);
 app.use('/api/vendor', APIRoutes.VendorAPI);
-app.use('/api', APIRoutes.VendorAPIUnrestricted);
+
 
 // Error handler
 app.use(errorHandler);
