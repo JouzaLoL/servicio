@@ -16,23 +16,42 @@ API.Request.Params = {};
 // Service Entry schema
 API.Type.Service = {
     type: 'object',
-    required: ['date', 'cost', 'description'],
+    required: ['date', 'cost', 'description', 'receipt', 'vendorID'],
     properties: {
         date: {
             type: 'string',
-            format: 'date'
+            format: 'date-time'
         },
         cost: {
             type: 'string',
-            minLength: 5,
+            minLength: 1,
             maxLength: 30
         },
         description: {
             type: 'string',
-            minLength: 5,
-            maxLength: 30
+            minLength: 10,
+            maxLength: 300
+        },
+        vendorID: {
+            type: 'string'
+        },
+        receipt: {
+            type: 'object',
+            required: ['data', 'contentType'],
+            properties: {
+                data: {},
+                contentType: {
+                    type: 'string'
+                }
+            }
         }
     }
+};
+
+API.Type.ServiceArray = {
+    type: 'array',
+    uniqueItems: true,
+    items: API.Type.Service
 };
 
 // Car Schema
@@ -95,8 +114,43 @@ API.Type.User = {
     }
 };
 
+API.Type.Vendor = {
+    type: 'object',
+    required: ['email', 'name', 'password'],
+    properties: {
+        email: {
+            type: 'string',
+            format: 'email',
+            minLength: 5,
+            maxLength: 30
+        },
+        password: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 60
+        },
+        name: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 50
+        },
+        telephone: {
+            type: 'string',
+            minLength: 9,
+            maxLength: 13
+        },
+        address: {
+            type: 'string',
+            minLength: 9,
+            maxLength: 80
+        }
+    }
+};
+
+
 API.Response.Basic = {
     type: "object",
+    required: ['success'],
     properties: {
         success: {
             type: "boolean"
@@ -104,10 +158,7 @@ API.Response.Basic = {
         message: {
             type: "string"
         },
-    },
-    required: [
-        "success"
-    ]
+    }
 };
 
 API.Request.Authenticate = {
@@ -129,20 +180,50 @@ API.Request.Authenticate = {
 };
 
 // Inheritance
-API.Request.Register = API.Type.User;
 API.Request.NewCar = API.Type.Car;
+API.Request.PatchCar = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+        model: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 30
+        },
+        year: {
+            type: 'string',
+            minLength: 4,
+            maxLength: 4
+        }
+    }
+};
 API.Request.NewService = API.Type.Service;
+
+API.Request.Search = {
+    additionalProperties: false,
+    type: 'object',
+    properties: {
+        type: {
+            type: 'string',
+            enum: ["spz", "ownerid", "carid"]
+        },
+        query: {
+            type: 'string',
+        }
+    }
+};
+
+API.Type.ID = {
+    type: 'string',
+    minLength: 24,
+    maxLength: 24
+};
 
 // Query with ID (for example for a Car)
 API.Request.Params.ID = {
     type: 'object',
     properties: {
-        id: {
-            type: 'string',
-            pattern: '/[a-zA-Z0-9]/',
-            minLength: 24,
-            maxLength: 24
-        }
+        id: API.Type.ID
     }
 };
 

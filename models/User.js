@@ -1,16 +1,27 @@
+'use strict';
+
 const bcrypt = require('bcrypt-nodejs');
 const mongoose = require('mongoose');
 
 const serviceSchema = new mongoose.Schema({
     date: Date,
     cost: String,
-    description: String
+    description: String,
+    vendorID: String,
+    receipt: {
+        data: Buffer,
+        contentType: String
+    }
 });
 
 const carSchema = new mongoose.Schema({
-    model: {
+    SPZ: {
         type: String,
-        required: true
+        required: true,
+        unique: true
+    },
+    model: {
+        type: String
     },
     year: String,
     serviceBook: [serviceSchema]
@@ -62,13 +73,64 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword,
     });
 };
 
+const vendorSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        unique: true,
+        required: true
+    },
+    password: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        unique: true,
+        required: true
+    },
+    telephone: String,
+    address: String
+}, {
+    timestamps: true
+});
+
+vendorSchema.pre('save', function save(next) {
+    const vendor = this;
+    if (!vendor.isModified('password')) {
+        return next();
+    }
+    bcrypt.genSalt(10, (err, salt) => {
+        if (err) {
+            return next(err);
+        }
+        bcrypt.hash(vendor.password, salt, null, (hashErr, hash) => {
+            if (hashErr) {
+                return next(hashErr);
+            }
+            vendor.password = hash;
+            next();
+        });
+    });
+});
+
+
+// Helper method for validating password
+vendorSchema.methods.comparePassword = function comparePassword(candidatePassword, callback) {
+    bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
+        callback(err, isMatch);
+    });
+};
+
 // ! mongoose.mode('Collection_name_in_singular', schema to use);
 const Service = mongoose.model('Service', serviceSchema);
 const Car = mongoose.model('Car', carSchema);
 const User = mongoose.model('User', userSchema);
 
+const Vendor = mongoose.model('Vendor', vendorSchema);
+
 module.exports = {
     User,
     Car,
-    Service
+    Service,
+    Vendor
 };
