@@ -236,7 +236,7 @@ UserAPI.post('/cars', validate({
       user.cars.push(newCar);
       user.save((err, savedUser) => {
         if (err) {
-          throw err;
+          next(err);
         }
         res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
           car: savedUser._doc.cars.id(newCar._id)
@@ -358,12 +358,13 @@ VendorAPI.get('/cars/search/:query', validate({
     })
     .exec()
     .then((user) => {
-      let car = user.cars.find((elem) => {
-        return elem.SPZ = query;
-      });
-      if (!car) {
+      if (!user) {
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
+        let car = user.cars.find((elem) => {
+          return elem.SPZ = query;
+        });
+
         return res.json(RouteHelper.BasicResponse(true, 'Car found', {
           car: car
         }));
@@ -399,12 +400,13 @@ VendorAPI.post('/cars/:id/services/', validate({
     })
     .exec()
     .then((user) => {
-      let car = user.cars.find((elem) => {
-        return elem.id = req.params.id;
-      });
-      if (!car) {
+      if (!user) {
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
+        let car = user.cars.find((elem) => {
+          return elem.id = req.params.id;
+        });
+
         car.serviceBook.push(newService);
         car.markModified('serviceBook');
         // Need to save embedded doc first, then parent doc !

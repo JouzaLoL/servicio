@@ -27,7 +27,7 @@ mongoose.connect(config.db);
 app.set('superSecret', config.secret);
 
 // Middleware
-if (config.util.getEnv('NODE_ENV') != 'production') {
+if (config.util.getEnv('NODE_ENV') != ('production') && config.util.getEnv('NODE_ENV') != ('test')) {
   app.use(morgan('tiny'));
 }
 app.use(bodyParser.json());
