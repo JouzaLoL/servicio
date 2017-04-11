@@ -1,3 +1,4 @@
+'use strict';
 // HTTP status codes
 // 200 – OK – Eyerything is working
 // 201 – OK – New resource has been created
@@ -226,7 +227,8 @@ UserAPI.post('/cars', validate({
 
   var newCar = new Car({
     model: req.body.model,
-    year: req.body.year
+    year: req.body.year,
+    SPZ: req.body.SPZ
   });
 
   getUser(userID)
@@ -261,7 +263,7 @@ UserAPI.patch('/cars/:id/', validate({
 
       Object.keys(req.body).forEach(function (key) {
         carToBeUpdated[key] = req.body[key];
-      }, this);
+      });
 
       user
         .save()
@@ -281,7 +283,7 @@ UserAPI.patch('/cars/:id/', validate({
 
 // Remove Car
 UserAPI.delete('/cars/:id/', validate({
-  query: Schema.Request.Params.ID
+  params: Schema.Request.Params.ID
 }), (req, res, next) => {
   var userID = req.decodedToken.id;
 
@@ -319,10 +321,14 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
   var userID = req.decodedToken.id;
   getUser(userID)
     .then((user) => {
-      var car = user.cars.id(req.params.id);
-      res.json(RouteHelper.BasicResponse(true, '', {
-        serviceBook: car.serviceBook
-      }));
+      let car = user.cars.id(req.params.id);
+      if (!car) {
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
+      } else {
+        return res.json(RouteHelper.BasicResponse(true, '', {
+          serviceBook: car.serviceBook
+        }));
+      }
     })
     .catch((error) => {
       next(error);
@@ -338,31 +344,38 @@ BEGIN RESTRICTED VENDOR API
 */
 
 VendorAPI.get('/cars/search/:query', validate({
-  params: Schema.Request.Search
+  params: Schema.Request.Search,
 }), (req, res, next) => {
   let query = req.params.query;
 
-  Car.findOne({
-      SPZ: query
-    }).then((car) => {
+  User
+    .findOne({
+      cars: {
+        $elemMatch: {
+          SPZ: query
+        }
+      }
+    })
+    .exec()
+    .then((user) => {
+      let car = user.cars.find((elem) => {
+        return elem.SPZ = query;
+      });
       if (!car) {
-        return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
         return res.json(RouteHelper.BasicResponse(true, 'Car found', {
           car: car
         }));
       }
-    })
-    .catch((err) => {
-      next(err);
     });
 });
 
 VendorAPI.post('/cars/:id/services/', validate({
-  body: Schema.Request.NewService
+  body: Schema.Request.NewService,
+  params: Schema.Request.Params.ID
 }), (req, res, next) => {
   var VendorID = req.decodedToken.id;
-
   let image = new Buffer(req.body.receipt.data, 'base64');
 
   var newService = new Service({
@@ -376,12 +389,21 @@ VendorAPI.post('/cars/:id/services/', validate({
     }
   });
 
-  Car.findOne({
-      _id: req.params.id
+  User
+    .findOne({
+      cars: {
+        $elemMatch: {
+          _id: req.params.id
+        }
+      }
     })
-    .then((car) => {
+    .exec()
+    .then((user) => {
+      let car = user.cars.find((elem) => {
+        return elem.id = req.params.id;
+      });
       if (!car) {
-        return res.json(RouteHelper.BasicResponse(false, 'Car not found').status(404));
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
         car.serviceBook.push(newService);
         car.markModified('serviceBook');
@@ -402,9 +424,6 @@ VendorAPI.post('/cars/:id/services/', validate({
             next(error);
           });
       }
-    })
-    .catch((err) => {
-      next(err);
     });
 });
 

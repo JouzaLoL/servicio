@@ -155,12 +155,9 @@ describe('API', () => {
             it('should not register a new vendor with illegal email', (done) => {
                 chai.request(app)
                     .post('/api/vendor/register')
-                    .send({
-                        email: "badvendoremail.com",
-                        password: "vendorpass",
-                        name: "Vendor Vendorson",
-                        telephone: "111222333"
-                    })
+                    .send(TestHelper.getTestVendor({
+                        email: "badmail.com"
+                    }))
                     .end((err, res) => {
                         expect(res).to.have.status(400);
                         done();
@@ -191,11 +188,12 @@ describe('API', () => {
             });
 
             it('should not authenticate a registered vendor against a bad password', (done) => {
+                let testVendor = TestHelper.getTestVendor();
                 chai.request(app)
                     .post('/api/vendor/authenticate')
                     .send({
-                        email: "test@test.com",
-                        password: "badpass"
+                        email: testVendor.email,
+                        password: "badpassword"
                     })
                     .end((err, res) => {
                         expect(err).to.not.be.null;
@@ -208,7 +206,7 @@ describe('API', () => {
 
     describe('User', () => {
         // Test user object for use in tests
-        let testUser;
+        var testUser;
 
         // The API key
         var APIKey;
@@ -234,8 +232,8 @@ describe('API', () => {
                 });
         });
 
-        describe('Car', () => {
-            before((done) => {
+        describe('Cars', () => {
+            beforeEach((done) => {
                 TestHelper.prepareDB(mongoose, true).then((user) => {
                     testUser = user[0];
                     APIKey = TestHelper.getAPIKey(testUser);
@@ -243,7 +241,7 @@ describe('API', () => {
                 });
             });
 
-            it("should get user's cars", (done) => {
+            it("should get own cars", (done) => {
                 chai.request(app)
                     .get('/api/user/cars')
                     .set('x-access-token', APIKey)
@@ -260,10 +258,7 @@ describe('API', () => {
                 chai.request(app)
                     .post('/api/user/cars')
                     .set('x-access-token', APIKey)
-                    .send({
-                        model: "Test Model",
-                        year: "2420"
-                    })
+                    .send(TestHelper.getTestCar())
                     .end((err, res) => {
                         expect(err).to.be.null;
                         expect(res).to.have.status(201);
@@ -303,52 +298,75 @@ describe('API', () => {
                     });
             });
 
-            describe('Service', () => {
-                before((done) => {
-                    TestHelper.prepareDB(mongoose, true).then((user) => {
-                        testUser = user[0];
-                        APIKey = TestHelper.getAPIKey(testUser);
+            it("should get own car's service entries", (done) => {
+                let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
+                chai.request(app)
+                    .get('/api/user/cars/' + randomCarId + '/services')
+                    .set('x-access-token', APIKey)
+                    .end((err, res) => {
+                        expect(err).to.be.null;
+                        expect(res).to.have.status(200);
+                        expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                        expect(res.body.serviceBook).to.be.jsonSchema(Schema.Type.ServiceArray);
                         done();
                     });
-                });
-
-                it("should get Car's service entries", (done) => {
-                    let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
-                    chai.request(app)
-                        .get('/api/user/cars/' + randomCarId + '/services')
-                        .set('x-access-token', APIKey)
-                        .end((err, res) => {
-                            expect(err).to.be.null;
-                            expect(res).to.have.status(200);
-                            expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
-                            expect(res.body.serviceBook).to.be.jsonSchema(Schema.Type.ServiceArray);
-                            done();
-                        });
-                });
-
-                it("should add new service entry", (done) => {
-                    let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
-                    let image = fs.readFileSync('test/receipt.jpg');
-                    chai.request(app)
-                        .post('/api/user/cars/' + randomCarId + '/services')
-                        .set('x-access-token', APIKey)
-                        .send({
-                            date: moment().toISOString(),
-                            cost: "42069",
-                            description: "Removed the driving wheel; not needed anymore since we have self-driving cars",
-                            receipt: {
-                                data: new Buffer(image).toString('base64'),
-                                contentType: imageType(image).mime
-                            }
-                        })
-                        .end((err, res) => {
-                            expect(err).to.be.null;
-                            expect(res).to.have.status(201);
-                            expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
-                            done();
-                        });
-                });
             });
+        });
+    });
+
+    describe('Vendor', () => {
+        // Test user object for use in tests
+        let testUser;
+
+        // Test vendor object for use in tests
+        let testVendor;
+
+        // The vendor API
+        var APIKey;
+
+        before((done) => {
+            TestHelper.prepareDB(mongoose, true).then((user) => {
+                testUser = user[0];
+                testVendor = user[1];
+                APIKey = TestHelper.getAPIKey(testVendor);
+                done();
+            });
+        });
+
+        it("should find a car via search", (done) => {
+            let randomCar = testUser.cars[Math.floor(Math.random() * testUser.cars.length)];
+            chai.request(app)
+                .get('/api/vendor/cars/search/' + randomCar.SPZ)
+                .set('x-access-token', APIKey)
+                .end((err, res) => {
+                    expect(err).to.be.null;
+                    expect(res).to.have.status(200);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    expect(res.body.car).to.be.jsonSchema(Schema.Type.Car);
+                    expect(res.body.car.SPZ).to.equal(randomCar.SPZ);
+                    done();
+                });
+        });
+
+        it("should add new service entry", (done) => {
+            let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
+            let image = fs.readFileSync('test/receipt.jpg');
+            chai.request(app)
+                .post('/api/vendor/cars/' + randomCarId + '/services')
+                .set('x-access-token', APIKey)
+                .send(TestHelper.getTestService({
+                    vendorID: testVendor.id,
+                    receipt: {
+                        data: new Buffer(image).toString('base64'),
+                        contentType: imageType(image).mime
+                    }
+                }))
+                .end((err, res) => {
+                    expect(err).to.be.null;
+                    expect(res).to.have.status(201);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    done();
+                });
         });
     });
 });
@@ -411,7 +429,7 @@ class TestHelper {
         var service = {
             date: new Date(Date.now()),
             cost: '3200',
-            description: 'Replaced brakes'
+            description: 'Replaced brakes',
         };
         Object.assign(service, params);
         return service;
@@ -452,6 +470,7 @@ class TestHelper {
             let testUser = new User(TestHelper.getTestUser({
                 cars: [TestHelper.getTestCar({
                     serviceBook: [TestHelper.getTestService({
+                        vendorID: "507f1f77bcf86cd799439011", // random ID
                         receipt: {
                             data: new Buffer(image).toString('base64'),
                             contentType: imageType(image).mime

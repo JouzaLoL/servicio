@@ -16,7 +16,7 @@ API.Request.Params = {};
 // Service Entry schema
 API.Type.Service = {
     type: 'object',
-    required: ['date', 'cost', 'description', 'receipt'],
+    required: ['date', 'cost', 'description', 'receipt', 'vendorID'],
     properties: {
         date: {
             type: 'string',
@@ -31,6 +31,9 @@ API.Type.Service = {
             type: 'string',
             minLength: 10,
             maxLength: 300
+        },
+        vendorID: {
+            type: 'string'
         },
         receipt: {
             type: 'object',
@@ -210,6 +213,11 @@ API.Request.Search = {
     }
 };
 
+API.Type.ID = {
+    type: 'string',
+    minLength: 24,
+    maxLength: 24
+};
 
 // Query with ID (for example for a Car)
 API.Request.Params.ID = {
@@ -217,13 +225,6 @@ API.Request.Params.ID = {
     properties: {
         id: API.Type.ID
     }
-};
-
-API.Type.ID = {
-    type: 'string',
-    pattern: '/[a-zA-Z0-9]/',
-    minLength: 24,
-    maxLength: 24
 };
 
 module.exports = API;
