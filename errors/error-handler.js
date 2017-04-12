@@ -38,10 +38,14 @@ function handleError(err, req, res, next) {
             res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
                 error: formattedError
             }));
-            console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
+            if (config.util.getEnv('NODE_ENV') != ('production')) {
+                console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
+            }
         } else {
             res.status(err.status || 500).json(serializeError(err));
-            console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
+            if (config.util.getEnv('NODE_ENV') != ('production')) {
+                console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
+            }
         }
     }
 }

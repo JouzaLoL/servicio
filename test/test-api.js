@@ -113,7 +113,22 @@ describe('API', () => {
             it('should not authenticate a registered user against a bad password', (done) => {
                 let authform = {
                     email: TestHelper.getTestUser().email,
-                    password: "baspassword",
+                    password: "badpassword",
+                };
+                chai.request(app)
+                    .post('/api/user/authenticate')
+                    .send(authform)
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(res).to.have.status(500);
+                        done();
+                    });
+            });
+
+            it('should not authenticate a nonexistent user', (done) => {
+                let authform = {
+                    email: "nonexistent@email.com",
+                    password: "password",
                 };
                 chai.request(app)
                     .post('/api/user/authenticate')
@@ -201,6 +216,21 @@ describe('API', () => {
                         done();
                     });
             });
+
+            it('should not authenticate a nonexistent vendor', (done) => {
+                let authform = {
+                    email: "nonexistent@email.com",
+                    password: "password",
+                };
+                chai.request(app)
+                    .post('/api/vendor/authenticate')
+                    .send(authform)
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(res).to.have.status(500);
+                        done();
+                    });
+            });
         });
     });
 
@@ -217,6 +247,17 @@ describe('API', () => {
                 APIKey = TestHelper.getAPIKey(testUser);
                 done();
             });
+        });
+
+        it('should not allow access without providing token', (done) => {
+            chai.request(app)
+                .get('/api/user')
+                .end((err, res) => {
+                    expect(err).to.not.be.null;
+                    expect(res).to.have.status(401);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    done();
+                });
         });
 
         it('should get the user document', (done) => {
@@ -286,6 +327,22 @@ describe('API', () => {
                     });
             });
 
+            it("should not update a nonexistent car", (done) => {
+                chai.request(app)
+                    .patch('/api/user/cars/' + '111111111111111111111111')
+                    .set('x-access-token', APIKey)
+                    .send({
+                        model: "Updated Model",
+                        year: "1999"
+                    })
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(res).to.have.status(404);
+                        expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                        done();
+                    });
+            });
+
             it("should remove a car", (done) => {
                 let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
                 chai.request(app)
@@ -294,6 +351,17 @@ describe('API', () => {
                     .end((err, res) => {
                         expect(err).to.be.null;
                         expect(res).to.have.status(204);
+                        done();
+                    });
+            });
+
+            it("should not remove a nonexistent car", (done) => {
+                chai.request(app)
+                    .delete('/api/user/cars/' + '111111111111111111111111')
+                    .set('x-access-token', APIKey)
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(res).to.have.status(404);
                         done();
                     });
             });
@@ -308,6 +376,18 @@ describe('API', () => {
                         expect(res).to.have.status(200);
                         expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                         expect(res.body.serviceBook).to.be.jsonSchema(Schema.Type.ServiceArray);
+                        done();
+                    });
+            });
+
+            it("should not get nonexistent car's service entries", (done) => {
+                chai.request(app)
+                    .get('/api/user/cars/' + '111111111111111111111111' + '/services')
+                    .set('x-access-token', APIKey)
+                    .end((err, res) => {
+                        expect(err).to.not.be.null;
+                        expect(res).to.have.status(404);
+                        expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                         done();
                     });
             });
@@ -348,7 +428,19 @@ describe('API', () => {
                 });
         });
 
-        it("should add new service entry", (done) => {
+        it("should not find a nonexistent car via search", (done) => {
+            chai.request(app)
+                .get('/api/vendor/cars/search/' + "ZZZZZZZ")
+                .set('x-access-token', APIKey)
+                .end((err, res) => {
+                    expect(err).to.not.be.null;
+                    expect(res).to.have.status(404);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    done();
+                });
+        });
+
+        it("should add a new service entry", (done) => {
             let randomCarId = testUser.cars[Math.floor(Math.random() * testUser.cars.length)].id;
             let image = fs.readFileSync('test/receipt.jpg');
             chai.request(app)
@@ -367,6 +459,67 @@ describe('API', () => {
                     expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                     done();
                 });
+        });
+
+        it("should not add a new service entry to a nonexistent car", (done) => {
+            let image = fs.readFileSync('test/receipt.jpg');
+            chai.request(app)
+                .post('/api/vendor/cars/' + '111111111111111111111111' + '/services')
+                .set('x-access-token', APIKey)
+                .send(TestHelper.getTestService({
+                    vendorID: testVendor.id,
+                    receipt: {
+                        data: new Buffer(image).toString('base64'),
+                        contentType: imageType(image).mime
+                    }
+                }))
+                .end((err, res) => {
+                    expect(err).to.not.be.null;
+                    expect(res).to.have.status(404);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    done();
+                });
+        });
+    });
+
+    describe('Production-specific tests', () => {
+        beforeEach((done) => {
+            process.env.NODE_ENV = 'production'; // Set to production
+            TestHelper.prepareDB(mongoose).then((err) => {
+                done(err);
+            });
+        });
+
+        it('should throw a JsonSchemaValidation error on bad request', (done) => {
+            chai.request(app)
+                .post('/api/user/register')
+                .send(TestHelper.getTestUser({
+                    email: "somebadmail"
+                }))
+                .end((err, res) => {
+                    expect(err).to.not.be.null;
+                    expect(res).to.have.status(400);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    done();
+                });
+        });
+
+        it('should throw a generic error on bad request', (done) => {
+            chai.request(app)
+                .delete('/api/user/cars/' + "somebadid")
+                .end((err, res) => {
+                    expect(err).to.not.be.null;
+                    expect(res).to.have.status(err.status);
+                    expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                    done();
+                });
+        });
+
+        afterEach((done) => {
+            process.env.NODE_ENV = 'test'; // Set back to test
+            TestHelper.prepareDB(mongoose).then((err) => {
+                done(err);
+            });
         });
     });
 });
