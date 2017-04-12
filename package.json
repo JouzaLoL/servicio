@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "start": "SET NODE_ENV=dev&& node app.js",
-    "test": "mocha"
+    "test": "nyc mocha"
   },
   "dependencies": {
     "ajv-i18n": "^1.6.3",
