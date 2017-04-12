@@ -58,6 +58,46 @@ class RouteHelper {
             next(new Error('No token provided'));
         }
     }
+
+
+    /**
+     * Strips sensitive information (passwords, IDs) from the object
+     *
+     * @static
+     * @param {Object[]} objects Object to strip
+     * @param {String[]} keepFields Properties to keep
+     *
+     * @memberOf RouteHelper
+     */
+    static strip(objects, keepFields) {
+        let strippedObjects = [];
+        let wasArray = true;
+        let sensitiveFields = ['password'];
+        let dbFields = ['_id', 'updatedAt', 'createdAt', '_v'];
+        let userFields = ['cars'];
+        let carFields = ['serviceBook'];
+
+        let fieldsToDelete = sensitiveFields.concat(dbFields).concat(userFields).concat(carFields).filter((elem) => {
+            if (!keepFields) {
+                return true;
+            }
+            return !keepFields.includes(elem);
+        });
+
+        if (!(objects instanceof Array)) {
+            objects = [objects];
+            wasArray = false;
+        }
+
+        objects.forEach(((object) => {
+            fieldsToDelete.forEach((field) => {
+                delete object[field];
+            });
+            strippedObjects.push(object);
+        }));
+
+        return wasArray ? strippedObjects : strippedObjects[0];
+    }
 }
 
 module.exports = RouteHelper;

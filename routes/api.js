@@ -197,7 +197,7 @@ UserAPI.get('/', (req, res, next) => {
   getUser(userID)
     .then((user) => {
       res.json(RouteHelper.BasicResponse(true, 'User found', {
-        user: user
+        user: RouteHelper.strip(user)
       }));
     })
     .catch((error) => {
@@ -211,7 +211,7 @@ UserAPI.get('/cars', (req, res, next) => {
   getUser(userID)
     .then((user) => {
       res.json(RouteHelper.BasicResponse(true, '', {
-        cars: user.cars
+        cars: RouteHelper.strip(user.cars, ['_id'])
       }));
     })
     .catch((error) => {
@@ -239,7 +239,7 @@ UserAPI.post('/cars', validate({
           next(err);
         }
         res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
-          car: savedUser._doc.cars.id(newCar._id)
+          car: RouteHelper.strip(savedUser._doc.cars.id(newCar._id), ['_id'])
         }));
       });
     })
@@ -269,7 +269,7 @@ UserAPI.patch('/cars/:id/', validate({
         .save()
         .then((savedUser) => {
           res.status(201).json(RouteHelper.BasicResponse(true, 'Car updated', {
-            updatedCar: savedUser.cars.id(carToBeUpdated.id)
+            updatedCar: RouteHelper.strip(savedUser.cars.id(carToBeUpdated.id), ['_id'])
           }));
         })
         .catch((error) => {
@@ -326,7 +326,7 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
         return res.json(RouteHelper.BasicResponse(true, '', {
-          serviceBook: car.serviceBook
+          serviceBook: RouteHelper.strip(car.serviceBook)
         }));
       }
     })
@@ -366,7 +366,7 @@ VendorAPI.get('/cars/search/:query', validate({
         });
 
         return res.json(RouteHelper.BasicResponse(true, 'Car found', {
-          car: car
+          car: RouteHelper.strip(car)
         }));
       }
     });
@@ -417,7 +417,7 @@ VendorAPI.post('/cars/:id/services/', validate({
               .save()
               .then(() => {
                 res.status(201).json(RouteHelper.BasicResponse(true, 'Service added', {
-                  service: user.cars.id(car.id).serviceBook.id(newService._id)
+                  service: RouteHelper.strip(user.cars.id(car.id).serviceBook.id(newService._id))
                 }));
               }).catch((error) => {
                 next(error);
