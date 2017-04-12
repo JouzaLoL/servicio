@@ -161,6 +161,29 @@ API.Response.Basic = {
     }
 };
 
+API.Response.User = {
+    type: 'object',
+    required: ['email'],
+    properties: {
+        email: {
+            type: 'string',
+            format: 'email',
+            minLength: 5,
+            maxLength: 30
+        },
+        name: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 30
+        },
+        telephone: {
+            type: 'string',
+            minLength: 9,
+            maxLength: 13
+        }
+    }
+};
+
 API.Request.Authenticate = {
     type: 'object',
     required: ['email', 'password'],
