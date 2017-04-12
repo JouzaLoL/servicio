@@ -268,7 +268,8 @@ describe('API', () => {
                     expect(err).to.be.null;
                     expect(res).to.have.status(200);
                     expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
-                    expect(res.body.user).to.be.jsonSchema(Schema.Type.User);
+                    expect(res.body.user).to.be.jsonSchema(Schema.Response.User);
+                    expect(res.body.user.password).to.be.null;
                     done();
                 });
         });

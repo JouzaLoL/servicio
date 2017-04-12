@@ -91,7 +91,7 @@ class RouteHelper {
 
         objects.forEach(((object) => {
             fieldsToDelete.forEach((field) => {
-                delete object[field];
+                object[field] = null;
             });
             strippedObjects.push(object);
         }));
