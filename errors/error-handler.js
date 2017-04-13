@@ -22,18 +22,18 @@ function handleError(err, req, res, next) {
             });
             return;
         } else {
-            res.status(err.status).json({
-                message: 'An error occured',
-                error: {
-                    status: err.status,
-                    method: err.method,
-                    path: er.path
-                }
-            });
+            res.status(err.status ? err.status : 400).json(
+                routeHelper.BasicResponse(false, 'An error occured', {
+                    error: {
+                        status: err.status,
+                        method: err.method,
+                        path: err.path
+                    }
+                }));
         }
     } else {
         // Need to JSON.stringify all errors before using chalk on them
-        if (err.name == 'JsonSchemaValidation') {
+        if (err.name == 'JsonSchemaValidationError') {
             let formattedError = FormatValidationError(err.validationErrors);
             res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
                 error: formattedError

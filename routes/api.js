@@ -32,7 +32,9 @@ let Vendor = UserModels.Vendor;
 let RouteHelper = require(__base + 'routes/routeHelper');
 
 // Validation
-let validate = require(__base + 'jsonschema/validate.js').validate;
+var Validator = require('express-json-validator-middleware').Validator;
+var validator = new Validator({allErrors: true});
+var validate = validator.validate.bind(validator);
 let Schema = require(__base + 'jsonschema/schema.js');
 
 // Init vars
