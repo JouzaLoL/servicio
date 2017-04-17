@@ -25,6 +25,7 @@ mongoose.connect(config.db);
 
 // Set secret for JWT
 app.set('superSecret', config.secret);
+let port = process.env.PORT || 3000;
 
 // Middleware
 if (config.util.getEnv('NODE_ENV') != ('production') && config.util.getEnv('NODE_ENV') != ('test')) {
@@ -49,6 +50,6 @@ app.use('/api/vendor', APIRoutes.VendorAPI);
 app.use(errorHandler);
 
 // Start server
-app.listen(3000, () => {
+app.listen(port, () => {
   console.log(chalk.green('Server started'));
 });
