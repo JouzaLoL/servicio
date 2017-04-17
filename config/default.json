@@ -1,4 +1,4 @@
 {
-    "db": "mongodb://admin-j:dhcepic10@mainc-shard-00-00-7lnxo.mongodb.net:27017,mainc-shard-00-01-7lnxo.mongodb.net:27017,mainc-shard-00-02-7lnxo.mongodb.net:27017/MainC?ssl=true&replicaSet=MainC-shard-0&authSource=admin",
-    "secret": "dhcepic10"
+    "db": "mongodb://localhost:27017/servicio_testing",
+    "secret": "jouza"
 }

@@ -55,7 +55,6 @@ class RouteHelper {
                 });
         } else {
             res.status(401).json(RouteHelper.BasicResponse(false, 'No token provided'));
-            next(new Error('No token provided'));
         }
     }
 
