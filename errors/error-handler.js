@@ -30,6 +30,7 @@ function handleError(err, req, res, next) {
                         path: err.path
                     }
                 }));
+            console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
         }
     } else {
         // Need to JSON.stringify all errors before using chalk on them
@@ -38,14 +39,10 @@ function handleError(err, req, res, next) {
             res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
                 error: formattedError
             }));
-            if (process.env.NODE_ENV != ('production')) {
-                console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
-            }
+            console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
         } else {
             res.status(err.status || 500).json(serializeError(err));
-            if (process.env.NODE_ENV != ('production')) {
-                console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
-            }
+            console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
         }
     }
 }
