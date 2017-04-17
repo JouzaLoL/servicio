@@ -10,8 +10,6 @@ let app = require('../app.js');
 let mongoose = require("mongoose");
 let Models = require(__base + 'models/User.js');
 let User = Models.User;
-let Car = Models.Car;
-let Service = Models.Service;
 let Vendor = Models.Vendor;
 
 // Receipt stuff
@@ -268,7 +266,7 @@ describe('API', () => {
                     expect(res).to.have.status(200);
                     expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                     expect(res.body.user).to.be.jsonSchema(Schema.Response.User);
-                    expect(res.body.user.password).to.be.null;
+                    expect(res.body.user.password).to.be.undefined;
                     done();
                 });
         });
