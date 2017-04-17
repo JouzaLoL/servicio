@@ -72,7 +72,7 @@ class RouteHelper {
         let strippedObjects = [];
         let wasArray = true;
         let sensitiveFields = ['password'];
-        let dbFields = ['_id', 'updatedAt', 'createdAt', '_v'];
+        let dbFields = ['_id', 'updatedAt', 'createdAt', '__v'];
         let userFields = ['cars'];
         let carFields = ['serviceBook'];
 
@@ -88,9 +88,10 @@ class RouteHelper {
             wasArray = false;
         }
 
-        objects.forEach(((object) => {
+        objects.forEach(((obj) => {
+            let object = obj.toObject();
             fieldsToDelete.forEach((field) => {
-                object[field] = null;
+                delete object[field];
             });
             strippedObjects.push(object);
         }));

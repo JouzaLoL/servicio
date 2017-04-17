@@ -26,7 +26,6 @@ let Schema = require(__base + 'jsonschema/schema.js');
 
 // Authentication
 let jwt = require('jsonwebtoken');
-let moment = require('moment');
 
 // Dev-dependencies
 let chai = require('chai');

@@ -45,6 +45,8 @@ app.use('/api/user', APIRoutes.UserAPI);
 app.use('/api/vendor', APIRoutes.VendorAPIUnrestricted);
 app.use('/api/vendor', APIRoutes.VendorAPI);
 
+// Strip middleware
+
 
 // Error handler
 app.use(errorHandler);
