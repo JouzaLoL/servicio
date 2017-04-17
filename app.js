@@ -2,7 +2,7 @@
 
 // Make require nicer
 global.__base = __dirname + '/';
-process.env.NODE_ENV = 'production';
+
 let express = require('express');
 var app = express();
 module.exports = app;
