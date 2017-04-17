@@ -32,3 +32,6 @@ npm-debug.log
 # Coverage
 .nyc_output
 coverage
+
+# Sensitive data
+config
