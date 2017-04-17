@@ -66,7 +66,7 @@ UserAPIUnrestricted.post('/register', validate({
     .save()
     .then(() => {
       res.status(201).json(RouteHelper.BasicResponse(true, 'User register successful', {
-        user: newUser
+        user: RotueHelper.strip(newUser)
       }));
     })
     .catch((error) => {
@@ -236,12 +236,9 @@ UserAPI.post('/cars', validate({
   getUser(userID)
     .then((user) => {
       user.cars.push(newCar);
-      user.save((err, savedUser) => {
-        if (err) {
-          next(err);
-        }
+      user.save((savedUser) => {
         res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
-          car: RouteHelper.strip(savedUser._doc.cars.id(newCar._id), ['_id'])
+          car: RouteHelper.strip(user.cars.id(newCar._id), ['_id'])
         }));
       });
     })

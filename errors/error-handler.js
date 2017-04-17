@@ -14,7 +14,7 @@ let chalk = require('chalk');
  */
 function handleError(err, req, res, next) {
     if (process.env.NODE_ENV == 'production') {
-        if (err.name == 'JsonSchemaValidation') {
+        if (err.name == 'JsonSchemaValidationError') {
             res.status(400).json({
                 success: false,
                 statusText: 'Bad Request',
@@ -38,12 +38,12 @@ function handleError(err, req, res, next) {
             res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
                 error: formattedError
             }));
-            if (config.util.getEnv('NODE_ENV') != ('production')) {
+            if (process.env.NODE_ENV != ('production')) {
                 console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
             }
         } else {
             res.status(err.status || 500).json(serializeError(err));
-            if (config.util.getEnv('NODE_ENV') != ('production')) {
+            if (process.env.NODE_ENV != ('production')) {
                 console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
             }
         }

@@ -57,12 +57,17 @@ API.Type.ServiceArray = {
 // Car Schema
 API.Type.Car = {
     type: 'object',
-    required: ['model', 'year'],
+    required: ['model', 'year', 'SPZ'],
     properties: {
         model: {
             type: 'string',
             minLength: 5,
             maxLength: 30
+        },
+        SPZ: {
+            type: 'string',
+            minLength: 7,
+            maxLength: 7
         },
         year: {
             type: 'string',
