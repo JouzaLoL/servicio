@@ -66,7 +66,7 @@ UserAPIUnrestricted.post('/register', validate({
     .save()
     .then(() => {
       res.status(201).json(RouteHelper.BasicResponse(true, 'User register successful', {
-        user: RotueHelper.strip(newUser)
+        user: RouteHelper.strip(newUser)
       }));
     })
     .catch((error) => {

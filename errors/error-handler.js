@@ -31,6 +31,7 @@ function handleError(err, req, res, next) {
                     }
                 }));
             console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
+            return;
         }
     } else {
         // Need to JSON.stringify all errors before using chalk on them
