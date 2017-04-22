@@ -22,8 +22,8 @@ let config = require('config');
 let dbUrl;
 let secret;
 if (process.env.NODE_ENV == 'production') {
-  dbUrl = config.util.getEnv('DB_URL');
-  secret = config.util.getEnv('SUPER_SECRET');
+  dbUrl = process.env.DB_URL;
+  secret = process.env.SECRET;
 } else {
   dbUrl = config.db;
   secret = config.secret;
