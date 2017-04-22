@@ -19,14 +19,14 @@ let errorHandler = require('./errors/error-handler.js');
 
 // Variable configuration
 let config = require('config');
-let configDb = config.util.getEnv('DB_URL') || config.db;
+let dbUrl = (config.util.getEnv('NODE_ENV') != ('production')) ? config.util.getEnv('DB_URL') : config.db;
 
 // MongoDB setup
 mongoose.Promise = global.Promise;
-mongoose.connect(configDb);
+mongoose.connect(dbUrl);
 
 // Set secret for JWT
-let secret = config.util.getEnv('SUPER_SECRET') || config.secret;
+let secret = (config.util.getEnv('NODE_ENV') != ('production')) ? config.util.getEnv('SUPER_SECRET') : config.secret;
 app.set('superSecret', secret);
 
 
