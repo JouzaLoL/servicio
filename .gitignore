@@ -34,4 +34,4 @@ npm-debug.log
 coverage
 
 # Sensitive data
-config
+config/production.json

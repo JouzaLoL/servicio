@@ -19,14 +19,16 @@ let errorHandler = require('./errors/error-handler.js');
 
 // Variable configuration
 let config = require('config');
+let configDb = config.util.getEnv('DB_URL') || config.db;
 
 // MongoDB setup
 mongoose.Promise = global.Promise;
-mongoose.connect(config.db);
+mongoose.connect(configDb);
 
 // Set secret for JWT
-app.set('superSecret', config.secret);
-let port = process.env.PORT || 3000;
+let secret = config.util.getEnv('SUPER_SECRET') || config.secret;
+app.set('superSecret', secret);
+
 
 // Middleware
 if (config.util.getEnv('NODE_ENV') != ('production') && config.util.getEnv('NODE_ENV') != ('test')) {
@@ -47,13 +49,11 @@ app.use('/api/user', APIRoutes.UserAPI);
 app.use('/api/vendor', APIRoutes.VendorAPIUnrestricted);
 app.use('/api/vendor', APIRoutes.VendorAPI);
 
-// Strip middleware
-
-
 // Error handler
 app.use(errorHandler);
 
 // Start server
+let port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(chalk.green('Server started'));
 });
