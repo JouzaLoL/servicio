@@ -12,6 +12,7 @@ let morgan = require('morgan');
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
 let chalk = require('chalk');
+let cors = require('cors');
 
 // Custom error handler
 let errorHandler = require('./errors/error-handler.js');
@@ -35,8 +36,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
 }));
+app.use(cors());
 
-// Rotues
+// Routes
 let APIRoutes = require('./routes/api');
 
 // Routes
