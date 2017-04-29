@@ -85,13 +85,13 @@ UserAPIUnrestricted.post('/authenticate', validate({
     .then((user) => {
       // No user found
       if (!user) {
-        next(new Error('User not found in database'));
+        next(Object.assign(Error('User not found in database'), {name: 'UserNotFound'}));
       } else if (user) {
         // User found
         // Verify password
         user.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
-            next(new Error("Passwords don't match"));
+            next(Object.assign(Error("Passwords don't match"), {name: 'BadPassword'}));
           } else if (isMatch) {
             // Passsword OK
             // Create a token

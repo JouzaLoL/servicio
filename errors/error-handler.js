@@ -36,6 +36,22 @@ function handleError(err, req, res, next) {
                     });
                     return;
 
+                case 'UserNotFound':
+                    res.status(404).json({
+                        success: false,
+                        statusText: err.message,
+                        error: err.name
+                    });
+                    return;
+
+                case 'BadPassword':
+                    res.status(400).json({
+                        success: false,
+                        statusText: err.message,
+                        error: err.name
+                    });
+                    return;
+
                 default:
                     res.status(err.status ? err.status : 400).json(
                         routeHelper.BasicResponse(false, 'An error occured', {
