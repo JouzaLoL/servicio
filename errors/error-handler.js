@@ -13,38 +13,55 @@ let chalk = require('chalk');
  * @returns
  */
 function handleError(err, req, res, next) {
-    if (process.env.NODE_ENV == 'production') {
-        if (err.name == 'JsonSchemaValidationError') {
-            res.status(400).json({
-                success: false,
-                statusText: 'Bad Request',
-                error: FormatValidationError(err.validationErrors)
-            });
-            return;
-        } else {
-            res.status(err.status ? err.status : 400).json(
-                routeHelper.BasicResponse(false, 'An error occured', {
-                    error: {
-                        status: err.status,
-                        method: err.method,
-                        path: err.path
-                    }
+    switch (process.env.NODE_ENV) {
+        case 'production':
+            switch (err.name) {
+                case 'JsonSchemaValidationError':
+                    res.status(400).json({
+                        success: false,
+                        statusText: 'Bad Request',
+                        error: FormatValidationError(err.validationErrors)
+                    });
+                    return;
+                case 'ValidationError':
+                    let error = {
+                        field: err.errors[Object.keys(err.errors)[0]].path,
+                        value: err.errors[Object.keys(err.errors)[0]].value,
+                        message: err.errors[Object.keys(err.errors)[0]].message
+                    };
+                    res.status(400).json({
+                        success: false,
+                        statusText: 'Validation Error',
+                        error: error
+                    });
+                    return;
+
+                default:
+                    res.status(err.status ? err.status : 400).json(
+                        routeHelper.BasicResponse(false, 'An error occured', {
+                            error: {
+                                status: err.status,
+                                method: err.method,
+                                path: err.path
+                            }
+                        }));
+                    console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
+                    return;
+            }
+            break;
+
+        default:
+            if (err.name == 'JsonSchemaValidationError') {
+                let formattedError = FormatValidationError(err.validationErrors);
+                res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
+                    error: formattedError
                 }));
-            console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
-            return;
-        }
-    } else {
-        // Need to JSON.stringify all errors before using chalk on them
-        if (err.name == 'JsonSchemaValidationError') {
-            let formattedError = FormatValidationError(err.validationErrors);
-            res.status(400).json(routeHelper.BasicResponse(false, 'Bad Request', {
-                error: formattedError
-            }));
-            console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
-        } else {
-            res.status(err.status || 500).json(serializeError(err));
-            console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
-        }
+                console.log(chalk.white.bgRed('Validation Error:') + ' ' + chalk.red(JSON.stringify(formattedError)));
+            } else {
+                res.status(err.status || 500).json(serializeError(err));
+                console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
+            }
+            break;
     }
 }
 

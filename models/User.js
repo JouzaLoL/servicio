@@ -2,6 +2,7 @@
 
 const bcrypt = require('bcrypt-nodejs');
 const mongoose = require('mongoose');
+let beautifyUnique = require('mongoose-beautiful-unique-validation');
 
 const serviceSchema = new mongoose.Schema({
     date: Date,
@@ -42,8 +43,8 @@ const userSchema = new mongoose.Schema({
     telephone: String,
     cars: [carSchema]
 }, {
-    timestamps: true
-});
+        timestamps: true
+    });
 
 /**
  * Password hash middleware.
@@ -92,8 +93,8 @@ const vendorSchema = new mongoose.Schema({
     telephone: String,
     address: String
 }, {
-    timestamps: true
-});
+        timestamps: true
+    });
 
 vendorSchema.pre('save', function save(next) {
     const vendor = this;
@@ -121,6 +122,11 @@ vendorSchema.methods.comparePassword = function comparePassword(candidatePasswor
         callback(err, isMatch);
     });
 };
+
+// Plugins
+userSchema.plugin(beautifyUnique);
+carSchema.plugin(beautifyUnique);
+vendorSchema.plugin(beautifyUnique);
 
 // ! mongoose.mode('Collection_name_in_singular', schema to use);
 const Service = mongoose.model('Service', serviceSchema);

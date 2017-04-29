@@ -4,12 +4,22 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
             "program": "${workspaceRoot}/app.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Production",
+            "program": "${workspaceRoot}/app.js",
+            "env": {
+                "NODE_ENV": "production",
+                "DB_URL": "mongodb://localhost:27017/servicio",
+                "SECRET": "prodtest"
+            }
         },
         {
             "type": "node",
@@ -46,7 +56,9 @@
             // Automatically stop program after launch.
             "stopOnEntry": false,
             // Command line arguments passed to the program.
-            "args": ["debug"],
+            "args": [
+                "debug"
+            ],
             // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
             "runtimeExecutable": null
         }

@@ -22,6 +22,7 @@ let config = require('config');
 let dbUrl;
 let secret;
 if (process.env.NODE_ENV == 'production') {
+  console.log('Configuring server for production environment');
   dbUrl = process.env.DB_URL;
   secret = process.env.SECRET;
 } else {
@@ -62,5 +63,5 @@ app.use(errorHandler);
 // Start server
 let port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(chalk.green('Server started'));
+  console.log(chalk.green('Server started') + " | NODE_ENV: " + config.util.getEnv('NODE_ENV'));
 });
