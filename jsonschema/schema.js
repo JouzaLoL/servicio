@@ -222,7 +222,12 @@ API.Request.PatchCar = {
             type: 'string',
             minLength: 4,
             maxLength: 4
-        }
+        },
+        SPZ: {
+            type: 'string',
+            minLength: 7,
+            maxLength: 7
+        },
     }
 };
 API.Request.NewService = API.Type.Service;
