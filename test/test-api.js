@@ -34,6 +34,7 @@ chai.use(require('chai-json-schema'));
 describe('API', () => {
     // Top-level cleanup before all tests
     before((done) => {
+        process.env.NODE_ENV = "production";
         TestHelper.prepareDB(mongoose).then((err) => {
             done(err);
         });
@@ -78,6 +79,19 @@ describe('API', () => {
                         done();
                     });
             });
+
+            it('should not register a new user with existing email', (done) => {
+                TestHelper.addTestUser().then(() => {
+                    chai.request(app)
+                        .post('/api/user/register')
+                        .send(TestHelper.getTestUser())
+                        .end((err, res) => {
+                            expect(err).to.not.be.null;
+                            expect(err).to.have.status(400);
+                            done();
+                        });
+                });
+            });
         });
 
         describe('authenticate', () => {
@@ -114,7 +128,7 @@ describe('API', () => {
                     .send(authform)
                     .end((err, res) => {
                         expect(err).to.not.be.null;
-                        expect(res).to.have.status(500);
+                        expect(res).to.have.status(400);
                         done();
                     });
             });
@@ -129,7 +143,7 @@ describe('API', () => {
                     .send(authform)
                     .end((err, res) => {
                         expect(err).to.not.be.null;
-                        expect(res).to.have.status(500);
+                        expect(res).to.have.status(404);
                         done();
                     });
             });
@@ -206,7 +220,7 @@ describe('API', () => {
                     })
                     .end((err, res) => {
                         expect(err).to.not.be.null;
-                        expect(res).to.have.status(500);
+                        expect(res).to.have.status(400);
                         done();
                     });
             });
@@ -221,7 +235,7 @@ describe('API', () => {
                     .send(authform)
                     .end((err, res) => {
                         expect(err).to.not.be.null;
-                        expect(res).to.have.status(500);
+                        expect(res).to.have.status(404);
                         done();
                     });
             });
@@ -671,8 +685,8 @@ class TestHelper {
         return jwt.sign({
             id: user.id
         }, app.get('superSecret'), {
-            expiresIn: '24h'
-        });
+                expiresIn: '24h'
+            });
     }
 
     /**

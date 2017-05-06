@@ -98,8 +98,8 @@ UserAPIUnrestricted.post('/authenticate', validate({
             let token = jwt.sign({
               id: user.id
             }, app.get('superSecret'), {
-              expiresIn: '24h'
-            });
+                expiresIn: '24h'
+              });
 
             // return the information including the token as JSON
             res.json(RouteHelper.BasicResponse(true, 'Authentication success. Token generated', {
@@ -155,21 +155,21 @@ VendorAPIUnrestricted.post('/authenticate', validate({
     .then((vendor) => {
       // No vendor found
       if (!vendor) {
-        next(new Error('vendor not found in database'));
+        next(Object.assign(Error('User not found in database'), {name: 'UserNotFound'}));
       } else if (vendor) {
         // vendor found
         // Verify password
         vendor.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
-            next(new Error("Passwords don't match"));
+            next(Object.assign(Error("Passwords don't match"), {name: 'BadPassword'}));
           } else if (isMatch) {
             // Passsword OK
             // Create a token
             let token = jwt.sign({
               id: vendor.id
             }, app.get('superSecret'), {
-              expiresIn: '24h'
-            });
+                expiresIn: '24h'
+              });
 
             // return the information including the token as JSON
             res.json(RouteHelper.BasicResponse(true, 'Authentication success. Token generated', {
@@ -236,6 +236,7 @@ UserAPI.post('/cars', validate({
   getUser(userID)
     .then((user) => {
       user.cars.push(newCar);
+      user.markModified('cars');
       user.save((savedUser) => {
         res.status(201).json(RouteHelper.BasicResponse(true, 'Car added', {
           car: RouteHelper.strip(user.cars.id(newCar._id), ['_id'])
