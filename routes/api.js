@@ -360,7 +360,7 @@ VendorAPI.get('/', (req, res, next) => {
 // Get all Services of this Vendor
 VendorAPI.get('/services', (req, res, next) => {
   var vendorID = req.decodedToken.id;
-  let services;
+  let services = [];
   User.find({}).exec().then((users) => {
     users.forEach(function (user) {
       user.cars.forEach(function (car) {
