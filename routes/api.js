@@ -367,7 +367,7 @@ VendorAPI.get('/services', (req, res, next) => {
         car.serviceBook.forEach(function (service) {
           if (service.vendorID == vendorID) {
             let s = service;
-            s.car = car;
+            s.SPZ = car.SPZ;
             services.push(s);
           }
         });
