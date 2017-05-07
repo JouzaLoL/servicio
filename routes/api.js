@@ -125,7 +125,7 @@ BEGIN UNRESTRICTED VENDOR API
 VendorAPIUnrestricted.post('/register', validate({
   body: Schema.Type.Vendor
 }), function (req, res, next) {
-  var newVendor = new User({
+  var newVendor = new Vendor({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
