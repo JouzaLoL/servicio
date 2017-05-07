@@ -371,15 +371,15 @@ VendorAPI.get('/services', (req, res, next) => {
         });
       });
     });
-  });
 
-  if (services) {
-    res.json(RouteHelper.BasicResponse(true, 'Servicebook', {
-      services: services
-    }));
-  } else {
-    res.status(404).json(RouteHelper.BasicResponse(false, 'No services found'));
-  }
+    if (services) {
+      res.json(RouteHelper.BasicResponse(true, 'Servicebook', {
+        services: services
+      }));
+    } else {
+      res.status(404).json(RouteHelper.BasicResponse(false, 'No services found'));
+    }
+  });
 });
 
 VendorAPI.get('/cars/search/:query', validate({
