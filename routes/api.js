@@ -364,11 +364,12 @@ VendorAPI.get('/services', (req, res, next) => {
   User.find({}).exec().then((users) => {
     users.forEach(function (user) {
       user.cars.forEach(function (car) {
+        var c = car;
         car.serviceBook.forEach(function (service) {
           if (service.vendorID == vendorID) {
-            let s;
+            let s = {};
             Object.assign(s, service);
-            s.car = car;
+            s.car = c;
             services.push(s);
           }
         });
