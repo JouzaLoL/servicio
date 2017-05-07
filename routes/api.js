@@ -368,7 +368,7 @@ VendorAPI.get('/services', (req, res, next) => {
         car.serviceBook.forEach(function (service) {
           if (service.vendorID == vendorID) {
             let s = {};
-            Object.assign(s, service);
+            Object.assign(s, service._doc);
             s.car = c;
             services.push(s);
           }
