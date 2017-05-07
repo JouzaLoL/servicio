@@ -81,7 +81,7 @@ describe('API', () => {
             });
 
             it('should not register a new user with existing email', (done) => {
-                TestHelper.addTestUser().then(() => {
+                TestHelper.prepareDB(mongoose, true).then((user) => {
                     chai.request(app)
                         .post('/api/user/register')
                         .send(TestHelper.getTestUser())
@@ -447,6 +447,38 @@ describe('API', () => {
                     expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
                     done();
                 });
+        });
+
+        it("should get all own services", (done) => {
+            TestHelper.prepareDB(mongoose, true).then((user) => {
+                let id = user[1].id;
+                let image = fs.readFileSync('test/receipt.jpg');
+                let test = new User(TestHelper.getTestUser({
+                    cars: [TestHelper.getTestCar({
+                        SPZ: "1M11234",
+                        serviceBook: [TestHelper.getTestService({
+                            vendorID: id,
+                            receipt: {
+                                data: new Buffer(image).toString('base64'),
+                                contentType: imageType(image).mime
+                            }
+                        })]
+                    })]
+                }));
+
+                test.save().then(() => {
+                    chai.request(app)
+                        .get('/api/vendor/services')
+                        .set('x-access-token', APIKey)
+                        .end((err, res) => {
+                            expect(err).to.be.null;
+                            expect(res).to.have.status(200);
+                            expect(res.body).to.be.jsonSchema(Schema.Response.Basic);
+                            expect(res.body.services).to.be.jsonSchema(Schema.Type.ServiceArray);
+                            done();
+                        });
+                });
+            });
         });
 
         it("should add a new service entry", (done) => {

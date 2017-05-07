@@ -19,7 +19,8 @@ const carSchema = new mongoose.Schema({
     SPZ: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        sparse: true
     },
     model: {
         type: String

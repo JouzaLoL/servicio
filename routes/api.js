@@ -33,7 +33,7 @@ let RouteHelper = require(__base + 'routes/routeHelper');
 
 // Validation
 var Validator = require('express-json-validator-middleware').Validator;
-var validator = new Validator({allErrors: true});
+var validator = new Validator({ allErrors: true });
 var validate = validator.validate.bind(validator);
 let Schema = require(__base + 'jsonschema/schema.js');
 
@@ -85,13 +85,13 @@ UserAPIUnrestricted.post('/authenticate', validate({
     .then((user) => {
       // No user found
       if (!user) {
-        next(Object.assign(Error('User not found in database'), {name: 'UserNotFound'}));
+        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound' }));
       } else if (user) {
         // User found
         // Verify password
         user.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
-            next(Object.assign(Error("Passwords don't match"), {name: 'BadPassword'}));
+            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword' }));
           } else if (isMatch) {
             // Passsword OK
             // Create a token
@@ -155,13 +155,13 @@ VendorAPIUnrestricted.post('/authenticate', validate({
     .then((vendor) => {
       // No vendor found
       if (!vendor) {
-        next(Object.assign(Error('User not found in database'), {name: 'UserNotFound'}));
+        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound' }));
       } else if (vendor) {
         // vendor found
         // Verify password
         vendor.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
-            next(Object.assign(Error("Passwords don't match"), {name: 'BadPassword'}));
+            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword' }));
           } else if (isMatch) {
             // Passsword OK
             // Create a token
@@ -338,10 +338,49 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
 /*
 END RESTRICTED USER API
 */
-// TRAVIS TRIGGERED
+
 /*
 BEGIN RESTRICTED VENDOR API
 */
+
+VendorAPI.get('/', (req, res, next) => {
+  var vendorID = req.decodedToken.id;
+
+  getVendor(vendorID)
+    .then((vendor) => {
+      res.json(RouteHelper.BasicResponse(true, 'Vendor found', {
+        vendor: RouteHelper.strip(vendor, ['_id'])
+      }));
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+// Get all Services of this Vendor
+VendorAPI.get('/services', (req, res, next) => {
+  var vendorID = req.decodedToken.id;
+  let services;
+  User.find({}).exec().then((users) => {
+    users.forEach(function (user) {
+      user.cars.forEach(function (car) {
+        car.serviceBook.forEach(function (service) {
+          if (service.vendorID == vendorID) {
+            services.push(service);
+          }
+        });
+      });
+    });
+  });
+
+  if (services) {
+    res.json(RouteHelper.BasicResponse(true, 'Servicebook', {
+      services: services
+    }));
+  } else {
+    res.status(404).json(RouteHelper.BasicResponse(false, 'No services found'));
+  }
+});
 
 VendorAPI.get('/cars/search/:query', validate({
   params: Schema.Request.Search,
@@ -362,11 +401,11 @@ VendorAPI.get('/cars/search/:query', validate({
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
         let car = user.cars.find((elem) => {
-          return elem.SPZ = query;
+          return (elem.SPZ == query);
         });
 
         return res.json(RouteHelper.BasicResponse(true, 'Car found', {
-          car: RouteHelper.strip(car)
+          car: RouteHelper.strip(car, ['_id'])
         }));
       }
     });
@@ -447,6 +486,31 @@ function getUser(id) {
           resolve(user);
         } else {
           reject('No user found');
+        }
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
+/**
+ * Gets Vendor from DB by ID
+ *
+ * @param {any} id
+ * @returns
+ */
+function getVendor(id) {
+  return new Promise((resolve, reject) => {
+    Vendor
+      .findOne({
+        _id: id
+      })
+      .then((vendor) => {
+        if (vendor) {
+          resolve(vendor);
+        } else {
+          reject('No vendor found');
         }
       })
       .catch((error) => {
