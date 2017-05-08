@@ -29,7 +29,6 @@ API.Type.Service = {
         },
         description: {
             type: 'string',
-            minLength: 10,
             maxLength: 300
         },
         vendorID: {
