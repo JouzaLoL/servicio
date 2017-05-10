@@ -330,7 +330,7 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
           var __services = [];
           car.serviceBook.forEach(function (service) {
             var s = {};
-            Object.assign(s, service);
+            Object.assign(s, service._doc);
             s.vendor = vendors.find((vendor) => {
               return vendor.id == service.vendorID;
             }).name;
