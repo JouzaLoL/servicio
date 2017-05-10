@@ -396,13 +396,13 @@ VendorAPI.get('/services', (req, res, next) => {
           var s = {};
           Object.assign(s, service);
           s.vendor = vendors.find((vendor) => {
-            vendor._id = service.vendorID;
+            vendor.id = service.vendorID;
           }).name;
           __services.push(s);
         });
 
         return res.json(RouteHelper.BasicResponse(true, 'Servicebook', {
-          services: services
+          services: __services
         }));
       });
     } else {
