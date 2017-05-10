@@ -338,7 +338,7 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
           });
 
           return res.json(RouteHelper.BasicResponse(true, '', {
-            serviceBook: RouteHelper.strip(__services)
+            serviceBook: __services
           }));
         });
       }

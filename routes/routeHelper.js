@@ -88,13 +88,13 @@ class RouteHelper {
             wasArray = false;
         }
 
-        objects.forEach(((obj) => {
+        objects.forEach((obj) => {
             let object = obj.toObject();
             fieldsToDelete.forEach((field) => {
                 delete object[field];
             });
             strippedObjects.push(object);
-        }));
+        });
 
         return wasArray ? strippedObjects : strippedObjects[0];
     }
