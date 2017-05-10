@@ -398,6 +398,7 @@ VendorAPI.get('/services', (req, res, next) => {
           var s = {};
           Object.assign(s, service);
           s.vendor = vendor.name;
+          console.log(vendor);
           __services.push(s);
         });
 
