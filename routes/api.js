@@ -390,14 +390,14 @@ VendorAPI.get('/services', (req, res, next) => {
     });
 
     if (services) {
-      Vendor.find({}).exec().then((vendors) => {
+      Vendor.find({
+        _id: vendorID
+      }).exec().then((vendor) => {
         let __services = [];
         services.forEach(function (service) {
           var s = {};
           Object.assign(s, service);
-          s.vendor = vendors.find((vendor) => {
-            vendor.id = service.vendorID;
-          }).name;
+          s.vendor = vendor.name;
           __services.push(s);
         });
 
