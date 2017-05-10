@@ -1,3 +1,5 @@
+'use strict';
+
 // The topmost schema object
 let API = {};
 
@@ -34,6 +36,9 @@ API.Type.Service = {
         vendorID: {
             type: 'string'
         },
+        vendorName: {
+            type: 'string'
+        },
         receipt: {
             type: 'object',
             required: ['data', 'contentType'],
@@ -67,6 +72,9 @@ API.Type.Car = {
             type: 'string',
             minLength: 7,
             maxLength: 7
+        },
+        VIN: {
+            type: 'string'
         },
         year: {
             type: 'string',

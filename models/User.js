@@ -9,6 +9,7 @@ const serviceSchema = new mongoose.Schema({
     cost: String,
     description: String,
     vendorID: String,
+    vendorName: String,
     receipt: {
         data: Buffer,
         contentType: String
@@ -19,6 +20,11 @@ const carSchema = new mongoose.Schema({
     SPZ: {
         type: String,
         required: true,
+        unique: true,
+        sparse: true
+    },
+    VIN: {
+        type: String,
         unique: true,
         sparse: true
     },
