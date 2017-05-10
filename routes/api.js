@@ -326,21 +326,21 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
       if (!car) {
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
-        var services = [];
-        car.serviceBook.forEach(function (service) {
-          var s = {};
-          Object.assign(s, car.serviceBook);
-          Vendor.find({
-            _id: service.vendorID
-          }).exec().then((vendor) => {
-            s.vendor = vendor.name;
-            services.push(s);
+        Vendor.find({}).exec().then((vendors) => {
+          var __services = [];
+          car.serviceBook.forEach(function (service) {
+            var s = {};
+            Object.assign(s, service);
+            s.vendor = vendors.find((vendor) => {
+              return vendor.id == service.vendorID;
+            }).name;
+            __services.push(s);
           });
-        });
 
-        return res.json(RouteHelper.BasicResponse(true, '', {
-          serviceBook: RouteHelper.strip(services)
-        }));
+          return res.json(RouteHelper.BasicResponse(true, '', {
+            serviceBook: RouteHelper.strip(services)
+          }));
+        });
       }
     })
     .catch((error) => {
