@@ -373,7 +373,7 @@ VendorAPI.get('/', (req, res, next) => {
 // Get all Services of this Vendor
 VendorAPI.get('/services', (req, res, next) => {
   var vendorID = req.decodedToken.id;
-  let services = [];
+  var services = [];
   User.find({}).exec().then((users) => {
     users.forEach(function (user) {
       user.cars.forEach(function (car) {
@@ -383,21 +383,28 @@ VendorAPI.get('/services', (req, res, next) => {
             var s = {};
             Object.assign(s, service._doc);
             s.car = c;
-            Vendor.find({
-              _id: vendorID
-            }).exec().then((vendor) => {
-              s.vendor = vendor.name;
-              services.push(s);
-            });
+            services.push(s);
           }
         });
       });
     });
 
     if (services) {
-      res.json(RouteHelper.BasicResponse(true, 'Servicebook', {
-        services: services
-      }));
+      Vendor.find({}).exec().then((vendors) => {
+        let __services = [];
+        services.forEach(function (service) {
+          var s = {};
+          Object.assign(s, service);
+          s.vendor = vendors.find((vendor) => {
+            vendor._id = service.vendorID;
+          }).name;
+          __services.push(s);
+        });
+
+        return res.json(RouteHelper.BasicResponse(true, 'Servicebook', {
+          services: services
+        }));
+      });
     } else {
       res.status(404).json(RouteHelper.BasicResponse(false, 'No services found'));
     }
