@@ -325,8 +325,20 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
       if (!car) {
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
+        var services = [];
+        car.serviceBook.forEach(function (service) {
+          var s = {};
+          Object.assign(s, car.serviceBook);
+          Vendor.find({
+            _id: service.vendorID
+          }).exec().then((vendor) => {
+            s.vendor = vendor.name;
+            services.push(s);
+          });
+        });
+
         return res.json(RouteHelper.BasicResponse(true, '', {
-          serviceBook: RouteHelper.strip(car.serviceBook)
+          serviceBook: RouteHelper.strip(services)
         }));
       }
     })
@@ -367,10 +379,15 @@ VendorAPI.get('/services', (req, res, next) => {
         var c = car;
         car.serviceBook.forEach(function (service) {
           if (service.vendorID == vendorID) {
-            let s = {};
+            var s = {};
             Object.assign(s, service._doc);
             s.car = c;
-            services.push(s);
+            Vendor.find({
+              _id: vendorID
+            }).exec().then((vendor) => {
+              s.vendor = vendor.name;
+              services.push(s);
+            });
           }
         });
       });
@@ -427,6 +444,7 @@ VendorAPI.post('/cars/:id/services/', validate({
     cost: req.body.cost,
     description: req.body.description,
     vendorID: VendorID,
+    mechanicName: req.body.mechanicName,
     receipt: {
       data: image,
       contentType: imageType(image).mime

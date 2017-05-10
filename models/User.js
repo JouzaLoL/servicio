@@ -9,7 +9,7 @@ const serviceSchema = new mongoose.Schema({
     cost: String,
     description: String,
     vendorID: String,
-    vendorName: String,
+    mechanicName: String,
     receipt: {
         data: Buffer,
         contentType: String
