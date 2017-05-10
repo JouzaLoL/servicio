@@ -230,7 +230,8 @@ UserAPI.post('/cars', validate({
   var newCar = new Car({
     model: req.body.model,
     year: req.body.year,
-    SPZ: req.body.SPZ
+    SPZ: req.body.SPZ,
+    VIN: req.body.VIN
   });
 
   getUser(userID)
