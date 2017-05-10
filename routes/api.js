@@ -397,8 +397,7 @@ VendorAPI.get('/services', (req, res, next) => {
         services.forEach(function (service) {
           var s = {};
           Object.assign(s, service);
-          s.vendor = vendor.name;
-          console.log(vendor);
+          s.vendor = vendor[0].name;
           __services.push(s);
         });
 
