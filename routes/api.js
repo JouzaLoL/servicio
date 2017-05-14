@@ -98,7 +98,7 @@ UserAPIUnrestricted.post('/authenticate', validate({
             let token = jwt.sign({
               id: user.id
             }, app.get('superSecret'), {
-                expiresIn: '24h'
+                expiresIn: '7d'
               });
 
             // return the information including the token as JSON
@@ -168,7 +168,7 @@ VendorAPIUnrestricted.post('/authenticate', validate({
             let token = jwt.sign({
               id: vendor.id
             }, app.get('superSecret'), {
-                expiresIn: '24h'
+                expiresIn: '7d'
               });
 
             // return the information including the token as JSON
@@ -353,6 +353,29 @@ END RESTRICTED USER API
 /*
 BEGIN RESTRICTED VENDOR API
 */
+
+VendorAPI.post('/user/register', validate({
+  body: Schema.Type.User
+}), function (req, res, next) {
+  var newUser = new User({
+    email: req.body.email,
+    password: req.body.password,
+    name: req.body.name,
+    telephone: req.body.telephone
+  });
+
+  // Save the new User to DB
+  newUser
+    .save()
+    .then(() => {
+      res.status(201).json(RouteHelper.BasicResponse(true, 'User register successful', {
+        user: RouteHelper.strip(newUser)
+      }));
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
 
 VendorAPI.get('/', (req, res, next) => {
   var vendorID = req.decodedToken.id;
