@@ -320,32 +320,30 @@ UserAPI.delete('/cars/:id/', validate({
 // Get Car's Service entries
 UserAPI.get('/cars/:id/services', (req, res, next) => {
   var userID = req.decodedToken.id;
-  getUser(userID)
-    .then((user) => {
-      let car = user.cars.id(req.params.id);
-      if (!car) {
-        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
-      } else {
-        Vendor.find({}).exec().then((vendors) => {
-          var __services = [];
-          car.serviceBook.forEach(function (service) {
-            var s = {};
-            Object.assign(s, service._doc);
-            s.vendor = vendors.find((vendor) => {
-              return vendor.id == service.vendorID;
-            }).name;
-            __services.push(s);
-          });
-
-          return res.json(RouteHelper.BasicResponse(true, '', {
-            serviceBook: __services
-          }));
+  getUser(userID).then((user) => {
+    let car = user.cars.id(req.params.id);
+    if (!car) {
+      return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
+    } else {
+      Vendor.find({}).exec().then((vendors) => {
+        var __services = [];
+        car.serviceBook.forEach(function (service) {
+          var s = {};
+          Object.assign(s, service._doc);
+          s.vendor = vendors.find((vendor) => {
+            return vendor.id == service.vendorID;
+          }).name;
+          __services.push(s);
         });
-      }
-    })
-    .catch((error) => {
-      next(error);
-    });
+
+        return res.json(RouteHelper.BasicResponse(true, '', {
+          serviceBook: __services
+        }));
+      });
+    }
+  }).catch((error) => {
+    next(error);
+  });
 });
 
 /*
@@ -359,15 +357,13 @@ BEGIN RESTRICTED VENDOR API
 VendorAPI.get('/', (req, res, next) => {
   var vendorID = req.decodedToken.id;
 
-  getVendor(vendorID)
-    .then((vendor) => {
-      res.json(RouteHelper.BasicResponse(true, 'Vendor found', {
-        vendor: RouteHelper.strip(vendor, ['_id'])
-      }));
-    })
-    .catch((error) => {
-      next(error);
-    });
+  getVendor(vendorID).then((vendor) => {
+    res.json(RouteHelper.BasicResponse(true, 'Vendor found', {
+      vendor: RouteHelper.strip(vendor, ['_id'])
+    }));
+  }).catch((error) => {
+    next(error);
+  });
 });
 
 // Get all Services of this Vendor
@@ -482,6 +478,7 @@ VendorAPI.post('/cars/:id/services/', validate({
         car
           .save()
           .then((savedCar) => {
+            user.markModified('cars');
             user
               .save()
               .then(() => {
