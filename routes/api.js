@@ -468,10 +468,7 @@ VendorAPI.post('/cars/:id/services/', validate({
       if (!user) {
         return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
       } else {
-        let car = user.cars.find((elem) => {
-          return elem.id = req.params.id;
-        });
-
+        let car = user.cars.id(req.params.id);
         car.serviceBook.push(newService);
         car.markModified('serviceBook');
         // Need to save embedded doc first, then parent doc !
