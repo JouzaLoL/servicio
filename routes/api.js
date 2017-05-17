@@ -568,6 +568,12 @@ AdminAPI.get('/', function (req, res, next) {
   return res.json({ name: 'admin@admin.com' });
 });
 
+AdminAPI.get('/user/', function (req, res, next) {
+  User.find({}).exec().then((users) => {
+    return res.json(RouteHelper.strip(users, ['_id']));
+  });
+});
+
 
 /**
  * Gets User from DB by ID
