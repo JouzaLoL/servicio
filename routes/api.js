@@ -564,6 +564,28 @@ AdminAPI.post('/user/register', validate({
     });
 });
 
+AdminAPI.post('/vendor/register', validate({
+  body: Schema.Type.Vendor
+}), function (req, res, next) {
+  var newVendor = new Vendor({
+    email: req.body.email,
+    password: req.body.password,
+    name: req.body.name,
+  });
+
+  // Save the new User to DB
+  newVendor
+    .save()
+    .then(() => {
+      res.status(201).json(RouteHelper.BasicResponse(true, 'ADMIN: Vendor register successful', {
+        vendor: RouteHelper.strip(newVendor)
+      }));
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
 AdminAPI.get('/', function (req, res, next) {
   return res.json({ name: 'admin@admin.com' });
 });
