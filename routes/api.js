@@ -574,6 +574,12 @@ AdminAPI.get('/user/', function (req, res, next) {
   });
 });
 
+AdminAPI.get('/vendor/', function (req, res, next) {
+  Vendor.find({}).exec().then((vendors) => {
+    return res.json(RouteHelper.strip(vendors, ['_id', 'updatedAt', 'createdAt']));
+  });
+});
+
 
 /**
  * Gets User from DB by ID
