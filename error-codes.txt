@@ -1,0 +1,7 @@
+101 - User/Vendor not found
+102 - Bad password
+103 - Email already exists
+
+201 - Car not found
+
+301 - Service not found

@@ -56,6 +56,8 @@ app.use('/api/user', APIRoutes.UserAPIUnrestricted);
 app.use('/api/user', APIRoutes.UserAPI);
 app.use('/api/vendor', APIRoutes.VendorAPIUnrestricted);
 app.use('/api/vendor', APIRoutes.VendorAPI);
+app.use('/api/admin', APIRoutes.AdminAPIUnrestricted);
+app.use('/api/admin', APIRoutes.AdminAPI);
 
 // Error handler
 app.use(errorHandler);

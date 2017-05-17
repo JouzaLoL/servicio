@@ -42,10 +42,13 @@ var UserAPIUnrestricted = express.Router();
 var VendorAPIUnrestricted = express.Router();
 var UserAPI = express.Router();
 var VendorAPI = express.Router();
+var AdminAPI = express.Router();
+var AdminAPIUnrestricted = express.Router();
 
 // JWT Verification middleware
 UserAPI.use(RouteHelper.verifyToken);
 VendorAPI.use(RouteHelper.verifyToken);
+AdminAPI.use(RouteHelper.verifyToken);
 
 /*
 BEGIN UNRESTRICTED USER API
@@ -85,13 +88,13 @@ UserAPIUnrestricted.post('/authenticate', validate({
     .then((user) => {
       // No user found
       if (!user) {
-        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound' }));
+        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound', code: 101 }));
       } else if (user) {
         // User found
         // Verify password
         user.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
-            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword' }));
+            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword', code: 102 }));
           } else if (isMatch) {
             // Passsword OK
             // Create a token
@@ -155,13 +158,13 @@ VendorAPIUnrestricted.post('/authenticate', validate({
     .then((vendor) => {
       // No vendor found
       if (!vendor) {
-        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound' }));
+        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound', code: 101 }));
       } else if (vendor) {
         // vendor found
         // Verify password
         vendor.comparePassword(req.body.password, (error, isMatch) => {
           if (!isMatch) {
-            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword' }));
+            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword', code: 102 }));
           } else if (isMatch) {
             // Passsword OK
             // Create a token
@@ -259,7 +262,7 @@ UserAPI.patch('/cars/:id/', validate({
     .then((user) => {
       let carToBeUpdated = user.cars.id(req.params.id);
       if (!carToBeUpdated) {
-        return res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID'));
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID', { code: 201 }));
       }
 
       Object.keys(req.body).forEach(function (key) {
@@ -309,7 +312,7 @@ UserAPI.delete('/cars/:id/', validate({
             next(err);
           });
       } else {
-        res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID'));
+        res.status(404).json(RouteHelper.BasicResponse(false, 'No Car matches the ID', { code: 201 }));
       }
     })
     .catch((error) => {
@@ -323,7 +326,7 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
   getUser(userID).then((user) => {
     let car = user.cars.id(req.params.id);
     if (!car) {
-      return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
+      return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found', { code: 201 }));
     } else {
       Vendor.find({}).exec().then((vendors) => {
         var __services = [];
@@ -336,7 +339,7 @@ UserAPI.get('/cars/:id/services', (req, res, next) => {
           __services.push(s);
         });
 
-        return res.json(RouteHelper.BasicResponse(true, '', {
+        return res.json(RouteHelper.BasicResponse(true, 'Services', {
           serviceBook: __services
         }));
       });
@@ -354,29 +357,7 @@ END RESTRICTED USER API
 BEGIN RESTRICTED VENDOR API
 */
 
-VendorAPI.post('/user/register', validate({
-  body: Schema.Type.User
-}), function (req, res, next) {
-  var newUser = new User({
-    email: req.body.email,
-    password: req.body.password,
-    name: req.body.name,
-    telephone: req.body.telephone
-  });
-
-  // Save the new User to DB
-  newUser
-    .save()
-    .then(() => {
-      res.status(201).json(RouteHelper.BasicResponse(true, 'User register successful', {
-        user: RouteHelper.strip(newUser)
-      }));
-    })
-    .catch((error) => {
-      next(error);
-    });
-});
-
+// Get own profile
 VendorAPI.get('/', (req, res, next) => {
   var vendorID = req.decodedToken.id;
 
@@ -425,7 +406,7 @@ VendorAPI.get('/services', (req, res, next) => {
         }));
       });
     } else {
-      res.status(404).json(RouteHelper.BasicResponse(false, 'No services found'));
+      res.status(404).json(RouteHelper.BasicResponse(false, 'No services found', { code: 301 }));
     }
   });
 });
@@ -446,7 +427,7 @@ VendorAPI.get('/cars/search/:query', validate({
     .exec()
     .then((user) => {
       if (!user) {
-        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found', { code: 201 }));
       } else {
         let car = user.cars.find((elem) => {
           return (elem.SPZ == query);
@@ -489,7 +470,7 @@ VendorAPI.post('/cars/:id/services/', validate({
     .exec()
     .then((user) => {
       if (!user) {
-        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found'));
+        return res.status(404).json(RouteHelper.BasicResponse(false, 'Car not found', { code: 201 }));
       } else {
         let car = user.cars.id(req.params.id);
         car.serviceBook.push(newService);
@@ -513,6 +494,78 @@ VendorAPI.post('/cars/:id/services/', validate({
           });
       }
     });
+});
+
+/*
+END RESTRICTED VENDOR API
+*/
+
+/*
+BEGIN ADMIN API
+*/
+AdminAPIUnrestricted.post('/authenticate', function (req, res, next) {
+  // Retrieve user from DB
+  User
+    .findOne({
+      email: 'admin@admin.com'
+    })
+    .then((user) => {
+      // No user found
+      if (!user) {
+        next(Object.assign(Error('User not found in database'), { name: 'UserNotFound', code: 101 }));
+      } else if (user) {
+        // User found
+        // Verify password
+        user.comparePassword(req.body.password, (error, isMatch) => {
+          if (!isMatch) {
+            next(Object.assign(Error("Passwords don't match"), { name: 'BadPassword', code: 102 }));
+          } else if (isMatch) {
+            // Passsword OK
+            // Create a token
+            let token = jwt.sign({
+              id: user.id
+            }, app.get('superSecret'), {
+                expiresIn: '1y'
+              });
+
+            // return the information including the token as JSON
+            res.json(RouteHelper.BasicResponse(true, 'ADMIN: Authentication success. Token generated', {
+              token: token
+            }));
+          }
+        });
+      }
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+AdminAPI.post('/user/register', validate({
+  body: Schema.Type.User
+}), function (req, res, next) {
+  var newUser = new User({
+    email: req.body.email,
+    password: req.body.password,
+    name: req.body.name,
+    telephone: req.body.telephone
+  });
+
+  // Save the new User to DB
+  newUser
+    .save()
+    .then(() => {
+      res.status(201).json(RouteHelper.BasicResponse(true, 'ADMIN: User register successful', {
+        user: RouteHelper.strip(newUser)
+      }));
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
+AdminAPI.get('/', function (req, res, next) {
+  return res.json({ name: 'admin@admin.com' });
 });
 
 

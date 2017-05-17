@@ -32,7 +32,8 @@ function handleError(err, req, res, next) {
                     res.status(400).json({
                         success: false,
                         statusText: 'Validation Error',
-                        error: error
+                        error: error,
+                        code: 103
                     });
                     return;
 
@@ -40,7 +41,8 @@ function handleError(err, req, res, next) {
                     res.status(404).json({
                         success: false,
                         statusText: err.message,
-                        error: err.name
+                        error: err.name,
+                        code: 101
                     });
                     return;
 
@@ -48,7 +50,8 @@ function handleError(err, req, res, next) {
                     res.status(400).json({
                         success: false,
                         statusText: err.message,
-                        error: err.name
+                        error: err.name,
+                        code: 102
                     });
                     return;
 
@@ -64,7 +67,6 @@ function handleError(err, req, res, next) {
                     console.log(chalk.white.bgRed('Error:') + ' ' + chalk.red(JSON.stringify(serializeError(err))));
                     return;
             }
-            break;
 
         default:
             if (err.name == 'JsonSchemaValidationError') {

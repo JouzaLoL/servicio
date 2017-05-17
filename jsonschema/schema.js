@@ -1,7 +1,7 @@
 'use strict';
 
 // The topmost schema object
-let API = {};
+var API = {};
 
 // Contains type schemas
 API.Type = {};

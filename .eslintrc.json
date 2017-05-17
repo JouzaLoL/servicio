@@ -12,6 +12,7 @@
         "max-len": "off",
         "valid-jsdoc": "off",
         "quotes": 0,
-        "no-shadow": "error"
+        "no-shadow": "error",
+        "object-curly-spacing": "off"
     }
 }
