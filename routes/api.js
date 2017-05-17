@@ -570,7 +570,7 @@ AdminAPI.get('/', function (req, res, next) {
 
 AdminAPI.get('/user/', function (req, res, next) {
   User.find({}).exec().then((users) => {
-    return res.json(RouteHelper.strip(users, ['_id']));
+    return res.json(RouteHelper.strip(users, ['_id', 'updatedAt', 'createdAt']));
   });
 });
 
