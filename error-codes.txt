@@ -1,5 +1,5 @@
 101 - User/Vendor not found
-102 - Bad password
+102 - Bad passwordhjer
 103 - Email already exists
 
 201 - Car not found

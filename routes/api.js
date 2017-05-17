@@ -624,5 +624,7 @@ module.exports = {
   UserAPIUnrestricted,
   VendorAPIUnrestricted,
   UserAPI,
-  VendorAPI
+  VendorAPI,
+  AdminAPI,
+  AdminAPIUnrestricted
 };
