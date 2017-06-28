@@ -18,7 +18,7 @@ API.Request.Params = {};
 // Service Entry schema
 API.Type.Service = {
     type: 'object',
-    required: ['date', 'cost', 'description', 'receipt', 'vendorID'],
+    required: ['date', 'cost', 'description', 'vendorID'],
     properties: {
         date: {
             type: 'string',
